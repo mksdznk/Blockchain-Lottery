@@ -1,4 +1,13 @@
 //CHAINLINK SCRIPT FOR LOTTERY WINNER
+
+
+/** TODO: 
+ * 
+ *  - Compute chainlink random verifiable number 
+ *  - Send in random number to offchain function
+ * 
+ */
+
 try {
   const lotteryAddress = args[0];
   const ticketPriceInWei = args[1];
@@ -9,7 +18,8 @@ try {
   else if (args[2] == 11155111) {
       chain = 'sepolia';
   }
-  console.log(chain);
+  const randomNumber = args[3];
+
   let response = await Functions.makeHttpRequest({
     method: 'GET',
     url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,
@@ -28,7 +38,6 @@ try {
     let lotteryAddresses = [];
     let entriesForAddress = 0;
     let cursor = response.data.cursor;
-    console.log(cursor);
 
     for (let i = 0; i < lotteryEntries.length; i++) {
         entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
@@ -58,9 +67,6 @@ try {
       entriesForAddress = 0;
       cursor = response.data.cursor;
 
-      console.log("cursor")
-      console.log('Response:', response.data.page);
-
       for (let i = 0; i < lotteryEntries.length; i++) {
         entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
         for (let j = 0; j < entriesForAddress; j++) {
@@ -70,12 +76,14 @@ try {
     }
 
   if (response.error) {
-    console.log('Response:', response);
     throw new Error(`API error: ${response.error}`);
   }
 
+    const winnerIndex = randomNumber % lotteryEntries.lenght;
+
     // Return the data properly encoded
-    return Functions.encodeString("test");
+    // TODO check if this return works!!!
+    return Functions.encodeString(lotteryEntries[winnerIndex]);
     // return Functions.encodeString(JSON.stringify({
     //     success: true,
     //     data: response.data

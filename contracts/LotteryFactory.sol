@@ -13,7 +13,7 @@ contract LotteryFactory is Ownable2Step {
                 STATE VARIABLES 
 /*////////////////////////////////////////////*/
     uint256 private lotteryCount;
-    address private activeLottery;
+    address payable private activeLottery;
     bool private lotteryPendingWinner;
 
 /*//////////////////////////////////////////////
@@ -51,26 +51,22 @@ contract LotteryFactory is Ownable2Step {
 /*//////////////////////////////////////////////
                 EXTERNAL FUNCTIONS
 /*////////////////////////////////////////////*/
-    function createLottery(uint256 cap, uint256 fee) external onlyOwner returns (address lottery) {
-        //IMPLEMENT
+    function createLottery(uint256 fee, uint256 ticketPriceInWei) external onlyOwner returns (address lottery) {
         require(!lotteryPendingWinner, LotteryFactory__ActiveLotteryExists());
         
-        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(lotteryCount, cap, fee));
+        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(lotteryCount, fee, ticketPriceInWei));
         emit LotteryFactory__LotteryCreated(lottery);
         lotteryCount++;
-        activeLottery = lottery;
+        activeLottery = payable(lottery);
     }
 
-    function endLottery(address lottery, address lotteryWinner) external onlyOwner {
+    function endLottery(address payable lottery, address lotteryWinner) external onlyOwner {
         require(lottery == activeLottery, LotteryFactory__NotLottery());
         require(lotteryWinner != address(0), LotteryFactory__InvalidRecipient());
 
-        ///////// Implement lottery ending
         Lottery(lottery).endLottery(lotteryWinner);
-        /////////
 
-        activeLottery = address(0);
-        //IMPLEMENT
+        activeLottery = payable(address(0));
     }
 
     function withdrawFees(uint256 amount, address recipient) external onlyOwner {
@@ -84,7 +80,7 @@ contract LotteryFactory is Ownable2Step {
     }
 
     function setActiveLottery(address lottery) external onlyLottery {
-        activeLottery = lottery;
+        activeLottery = payable(lottery);
     }
 
     function setLotteryPendingWinner(bool pending) external onlyLottery {
@@ -98,7 +94,7 @@ contract LotteryFactory is Ownable2Step {
         return lotteryCount;
     }
 
-    function getActiveLottery() public view returns (address) {
+    function getActiveLottery() public view returns (address payable) {
         return activeLottery;
     }
 

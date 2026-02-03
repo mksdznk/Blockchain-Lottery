@@ -1,15 +1,3 @@
-//TODO: 
-/*
-*  - LIMIT INDIVIDUAL OWNERS TO 500
-*  - NFT LOGIC
-*  - FRONT END
-* 
-* LIMITATIONS::
-*  - 500 INDIVIDUALS
-*  - cca 5000 tickets
-* 
-*/
-
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 

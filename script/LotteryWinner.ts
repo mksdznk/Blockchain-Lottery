@@ -1,13 +1,3 @@
-//CHAINLINK SCRIPT FOR LOTTERY WINNER
-
-
-/** TODO: 
- * 
- *  - Compute chainlink random verifiable number 
- *  - Send in random number to offchain function
- * 
- */
-
 try {
   const lotteryAddress = args[0];
   const ticketPriceInWei = args[1];
@@ -42,7 +32,7 @@ try {
     for (let i = 0; i < lotteryEntries.length; i++) {
         entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
         for (let j = 0; j < entriesForAddress; j++) {
-          lotteryAddresses.push(lotteryEntries[i]);
+          lotteryAddresses.push(lotteryEntries[i].owner_address);
         }
     }
 
@@ -70,7 +60,7 @@ try {
       for (let i = 0; i < lotteryEntries.length; i++) {
         entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
         for (let j = 0; j < entriesForAddress; j++) {
-          lotteryAddresses.push(lotteryEntries[i]);
+          lotteryAddresses.push(lotteryEntries[i].owner_address);
         }
       }
     }
@@ -79,15 +69,9 @@ try {
     throw new Error(`API error: ${response.error}`);
   }
 
-    const winnerIndex = randomNumber % lotteryEntries.lenght;
+    const winnerIndex = randomNumber % lotteryAddresses.length;
 
-    // Return the data properly encoded
-    // TODO check if this return works!!!
-    return Functions.encodeString(lotteryEntries[winnerIndex]);
-    // return Functions.encodeString(JSON.stringify({
-    //     success: true,
-    //     data: response.data
-    // }));
+    return Functions.encodeString(lotteryAddresses[winnerIndex]);
 
 } catch (error) {
   console.error('Error:', error);

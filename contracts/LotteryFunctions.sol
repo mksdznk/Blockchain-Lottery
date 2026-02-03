@@ -4,24 +4,22 @@ pragma solidity ^0.8.30;
 import {FunctionsClient} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {FunctionsRequest} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import {IFunctionsClient} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/interfaces/IFunctionsClient.sol";
-import {
-    AutomationCompatibleInterface
-} from "@chainlink/contracts/v0.8/interfaces/AutomationCompatibleInterface.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/v0.8/interfaces/AutomationCompatibleInterface.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/v0.8/dev/vrf/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/v0.8/dev/vrf/libraries/VRFV2PlusClient.sol";
 import {LotteryFactory} from "./LotteryFactory.sol";
 import {Lottery} from "./Lottery.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-
 contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRFConsumerBaseV2Plus {
     using FunctionsRequest for FunctionsRequest.Request;
 
-/*///////////////////////////////////////////////
-                STATE VARIABLES 
-/*/////////////////////////////////////////////*/
+    /*///////////////////////////////////////////////
+                    STATE VARIABLES
+    /*/
+    ////////////////////////////////////////////*/
     bytes32 private s_lastFunctionsRequestId;
-    bytes32 private s_lastVRFRequestId;
+    uint256 private s_lastVRFRequestId;
     bytes private s_lastFunctionsResponse;
     bytes private s_lastVRFResponse;
     bytes private s_lastFunctionsError;
@@ -36,26 +34,26 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     address private router; // = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0; //// ENTER YOUR ROUTER ADDRESS
     bytes32 private donID; // = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; //// ENTER YOUR DON ID
     string private source = "try {const lotteryAddress = args[0];"
-    "const ticketPriceInWei = args[1];let chain;if (args[2] == 1) {chain = 'eth';}else if (args[2] == 11155111) {"
-    "chain = 'sepolia';}const randomNumber = args[3];let response = await Functions.makeHttpRequest({"
-    "method: 'GET',url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,"
-    "params: {chain: chain,limit: '100',order: 'DESC'},headers: {accept: 'application/json',"
-    "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'}});"
-    "let lotteryEntries = response.data.result;let lotteryAddresses = [];let entriesForAddress = 0;let cursor = response.data.cursor;"
-    "for (let i = 0; i < lotteryEntries.length; i++) {entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);"
-    "for (let j = 0; j < entriesForAddress; j++) {lotteryAddresses.push(lotteryEntries[i].owner_address);}}"
-    "while (cursor != null) {response = await Functions.makeHttpRequest({"
-    "method: 'GET',url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,"
-    "params: {chain: chain,limit: '100',order: 'DESC',cursor: cursor,},headers: {accept: 'application/json',"
-    "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'"
-    "}});lotteryEntries = response.data.result;entriesForAddress = 0;"
-    "cursor = response.data.cursor;for (let i = 0; i < lotteryEntries.length; i++) {"
-    "entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);for (let j = 0; j < entriesForAddress; j++) {"
-    "lotteryAddresses.push(lotteryEntries[i].owner_address);}}}if (response.error) {"
-    "throw new Error(`API error: ${response.error}`);}const winnerIndex = randomNumber % lotteryAddresses.length;"
-    "return Functions.encodeString(lotteryAddresses[winnerIndex]);} catch (error) {console.error('Error:', error);"
-    "return Functions.encodeString(JSON.stringify({success: false,error: error.message}));}";  
-        
+        "const ticketPriceInWei = args[1];let chain;if (args[2] == 1) {chain = 'eth';}else if (args[2] == 11155111) {"
+        "chain = 'sepolia';}const randomNumber = args[3];let response = await Functions.makeHttpRequest({"
+        "method: 'GET',url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,"
+        "params: {chain: chain,limit: '100',order: 'DESC'},headers: {accept: 'application/json',"
+        "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'}});"
+        "let lotteryEntries = response.data.result;let lotteryAddresses = [];let entriesForAddress = 0;let cursor = response.data.cursor;"
+        "for (let i = 0; i < lotteryEntries.length; i++) {entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);"
+        "for (let j = 0; j < entriesForAddress; j++) {lotteryAddresses.push(lotteryEntries[i].owner_address);}}"
+        "while (cursor != null) {response = await Functions.makeHttpRequest({"
+        "method: 'GET',url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,"
+        "params: {chain: chain,limit: '100',order: 'DESC',cursor: cursor,},headers: {accept: 'application/json',"
+        "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'"
+        "}});lotteryEntries = response.data.result;entriesForAddress = 0;"
+        "cursor = response.data.cursor;for (let i = 0; i < lotteryEntries.length; i++) {"
+        "entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);for (let j = 0; j < entriesForAddress; j++) {"
+        "lotteryAddresses.push(lotteryEntries[i].owner_address);}}}if (response.error) {"
+        "throw new Error(`API error: ${response.error}`);}const winnerIndex = randomNumber % lotteryAddresses.length;"
+        "return Functions.encodeString(lotteryAddresses[winnerIndex]);} catch (error) {console.error('Error:', error);"
+        "return Functions.encodeString(JSON.stringify({success: false,error: error.message}));}";
+
     struct RequestStatus {
         bool fulfilled;
         bool exists;
@@ -64,24 +62,23 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
 
     mapping(uint256 => RequestStatus) private s_requests;
 
-
-/*///////////////////////////////////////////////
-                    ERRORS 
-//////////////////////////////////////////////*/
+    /*///////////////////////////////////////////////
+                        ERRORS
+    //////////////////////////////////////////////*/
     error LotteryFunctions__UnexpectedRequestID(bytes32 requestId);
     error LotteryFunctions__UpkeepNotNeeded();
     error LotteryFunctions__InvalidSubscription();
     error LotteryFunctions__LotteryNotValid();
 
-/*///////////////////////////////////////////////
-                    EVENTS 
-//////////////////////////////////////////////*/
+    /*///////////////////////////////////////////////
+                        EVENTS
+    //////////////////////////////////////////////*/
     event LotteryFunctions__Response(bytes32 indexed requestId, address winner, bytes response, bytes err);
 
-/*///////////////////////////////////////////////
-                    CONSTRUCTOR 
-///////////////////////////////////////////////*/
-    constructor( 
+    /*///////////////////////////////////////////////
+                        CONSTRUCTOR
+    ///////////////////////////////////////////////*/
+    constructor(
         address _router,
         bytes32 _donID,
         uint64 _functionsSubscriptionId,
@@ -91,6 +88,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     )
         FunctionsClient(router)
         VRFConsumerBaseV2Plus(_vrfCoordinator) /* VRF vrfCoordinator address is address deployed to each network by Chainlink to handle and verify VRF https://docs.chain.link/vrf/v2-5/supported-networks */
+
     {
         router = _router;
         donID = _donID;
@@ -99,13 +97,12 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         lotteryFactory = _lotteryFactory;
     }
 
-/*///////////////////////////////////////////////
-                EXTERNAL FUNCTIONS 
-///////////////////////////////////////////////*/
+    /*///////////////////////////////////////////////
+                    EXTERNAL FUNCTIONS
+    ///////////////////////////////////////////////*/
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory) {
-        upkeepNeeded = 
-            LotteryFactory(lotteryFactory).getActiveLottery() != address(0);
+        upkeepNeeded = LotteryFactory(lotteryFactory).getActiveLottery() != address(0);
 
         return (upkeepNeeded, "");
     }
@@ -125,34 +122,32 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         lastVRFCallTime = block.timestamp;
 
         /*
-        *
         * CALL RANDOM NUMBER
-        *
         */
         _getLotteryWinnerIndex();
     }
 
-  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-    s_requests[requestId].fulfilled = true;
-    s_requests[requestId].randomWords = randomWords;
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+        s_requests[requestId].fulfilled = true;
+        s_requests[requestId].randomWords = randomWords;
 
-    string[] memory args = new string[](4);
-    address payable lottery = LotteryFactory(lotteryFactory).getActiveLottery();
-    args[0] = Strings.toHexString(lottery);
-    args[1] = Strings.toString(Lottery(lottery).getTicketPriceInWei());
-    args[2] = Strings.toString(block.chainid);
-    args[3] = Strings.toString(randomWords[0]);
+        string[] memory args = new string[](4);
+        address payable lottery = LotteryFactory(lotteryFactory).getActiveLottery();
+        args[0] = Strings.toHexString(lottery);
+        args[1] = Strings.toString(Lottery(lottery).getTicketPriceInWei());
+        args[2] = Strings.toString(block.chainid);
+        args[3] = Strings.toString(randomWords[0]);
 
-    _getWinner(i_functionsSubscriptionId, args);
-  }
+        _getWinner(i_functionsSubscriptionId, args);
+    }
 
-  function forceEndLottery() external onlyOwner {
-    _getLotteryWinnerIndex();
-  }
-    
-/*///////////////////////////////////////////////
-                INTERNAL FUNCTIONS 
-/*/////////////////////////////////////////////*/
+    function forceEndLottery() external onlyOwner {
+        _getLotteryWinnerIndex();
+    }
+
+    /*///////////////////////////////////////////////
+                    INTERNAL FUNCTIONS
+    ///////////////////////////////////////////////*/
 
     /**
      * @notice Callback function for fulfilling a request
@@ -169,7 +164,6 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         s_lastFunctionsError = err;
         address lotteryWinner;
 
-
         if (err.length == 0) {
             lotteryWinner = abi.decode(response, (address));
             address payable lotteryAddress = LotteryFactory(lotteryFactory).getActiveLottery();
@@ -179,7 +173,6 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         // Emit an event to log the response
         emit LotteryFunctions__Response(requestId, lotteryWinner, s_lastFunctionsResponse, s_lastFunctionsError);
     }
-
 
     function _getWinner(uint64 subscriptionId, string[] memory args) internal returns (bytes32) {
         FunctionsRequest.Request memory req;
@@ -191,7 +184,6 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
 
         return s_lastFunctionsRequestId;
     }
-
 
     function _getLotteryWinnerIndex() internal returns (uint256) {
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
@@ -206,18 +198,14 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         );
 
         s_lastVRFRequestId = requestId;
-        s_requests[requestId] = RequestStatus({
-            exists: true,
-            fulfilled: false,
-            randomWords: new uint256[](0)
-        });
+        s_requests[requestId] = RequestStatus({exists: true, fulfilled: false, randomWords: new uint256[](0)});
 
         return requestId;
     }
-    
-/*///////////////////////////////////////////////
-                VIEW FUNCTIONS 
-/*/////////////////////////////////////////////*/
+
+    /*///////////////////////////////////////////////
+                    VIEW FUNCTIONS
+    ///////////////////////////////////////////////*/
 
     function getLastVRFCallTime() external view returns (uint256) {
         return lastVRFCallTime;

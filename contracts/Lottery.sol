@@ -6,20 +6,20 @@ import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20C
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {LotteryFactory} from "./LotteryFactory.sol";
 import {LotteryNFT} from "./LotteryNFT.sol";
- 
+
 contract Lottery is ERC20Capped {
-/*///////////////////////////////////////////////
-                STATE VARIABLES 
-/*/////////////////////////////////////////////*/
+    /*///////////////////////////////////////////////
+                    STATE VARIABLES
+    ///////////////////////////////////////////////*/
     uint256 private lotteryId;
     uint256 private feePercentage; // in basis points
     uint256 private ticketPriceInWei;
     address private lotteryFactory;
     uint256 private numberOfOwners; // to keep track of limited number of owners
 
-/*//////////////////////////////////////////////
-                    ERRORS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        ERRORS
+    //////////////////////////////////////////////*/
     error Lottery__NotOpen();
     error Lottery__NotPending();
     error Lottery__TicketsLimitReached();
@@ -29,21 +29,21 @@ contract Lottery is ERC20Capped {
     error Lottery__DirectTransfersDisabled();
     error Lottery__TooManyOwners();
 
-/*//////////////////////////////////////////////
-                    EVENTS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        EVENTS
+    //////////////////////////////////////////////*/
     event Lottery__TicketsPurchased(address buyer, uint256 amount);
     event Lottery__TicketsTransfered(address sender, address buyer, uint256 amount);
     event Lottery__FeesWithdrawn(address recipient, uint256 amount);
     event Lottery__LotteryClosed(address winner, uint256 reward);
 
-/*//////////////////////////////////////////////
-                    MODIFIERS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        MODIFIERS
+    //////////////////////////////////////////////*/
     modifier lotteryIsOpen() {
         if (address(this).balance < cap()) revert Lottery__TicketsLimitReached();
         _;
-    }    
+    }
 
     modifier onlyFactory() {
         require(msg.sender == lotteryFactory, Lottery__NotPending());
@@ -70,9 +70,9 @@ contract Lottery is ERC20Capped {
         _;
     }
 
-/*/////////////// CONSTRUCTOR ///////////////*/
-    constructor (uint256 _lotteryId, uint256 _feePercentage, uint256 _ticketPriceInWei) 
-        ERC20("Lottery Ticket", "LT") 
+    /*/////////////// CONSTRUCTOR ///////////////*/
+    constructor(uint256 _lotteryId, uint256 _feePercentage, uint256 _ticketPriceInWei)
+        ERC20("Lottery Ticket", "LT")
         ERC20Capped(5000)
     {
         lotteryId = _lotteryId;
@@ -80,34 +80,24 @@ contract Lottery is ERC20Capped {
         ticketPriceInWei = _ticketPriceInWei;
         lotteryFactory = msg.sender;
     }
-     
 
-/*//////////////////////////////////////////////
-                PUBLIC FUNCTIONS 
-/*////////////////////////////////////////////*/
-    function transferFrom(address, address, uint256) 
-        public virtual override returns (bool) 
-    {
+    /*//////////////////////////////////////////////
+                    PUBLIC FUNCTIONS
+    //////////////////////////////////////////////*/
+    function transferFrom(address, address, uint256) public virtual override returns (bool) {
         revert Lottery__DirectTransfersDisabled();
     }
 
-    function transfer(address, uint256) 
-        public virtual override returns (bool) 
-    {
+    function transfer(address, uint256) public virtual override returns (bool) {
         revert Lottery__DirectTransfersDisabled();
     }
 
     receive() external payable {}
-    
-/*//////////////////////////////////////////////
-                EXTERNAL FUNCTIONS 
-/*////////////////////////////////////////////*/
-    function purchaseTickets() 
-        external payable 
-        lotteryIsOpen 
-        setPendingWinner 
-        manageOwners(address(0), 0, msg.sender) 
-    {
+
+    /*//////////////////////////////////////////////
+                    EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////*/
+    function purchaseTickets() external payable lotteryIsOpen setPendingWinner manageOwners(address(0), 0, msg.sender) {
         uint256 tickets = msg.value;
         require(tickets > 0, Lottery__ZeroValue());
         require(tickets % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
@@ -116,29 +106,23 @@ contract Lottery is ERC20Capped {
         emit Lottery__TicketsPurchased(msg.sender, tickets);
     }
 
-    function transferTickets(address recipient, uint256 amount) 
-        external 
-        manageOwners(msg.sender, amount, recipient) 
-    {
+    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) {
         require(amount % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
-        _transfer(msg.sender, recipient, amount);  // ← this calls _update(from=msg.sender, recipient, amount) internally
-        emit Lottery__TicketsTransfered(msg.sender, recipient, amount);  
+        _transfer(msg.sender, recipient, amount); // ← this calls _update(from=msg.sender, recipient, amount) internally
+        emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }
 
-    function endLottery(address lotteryWinner) 
-        external 
-        onlyFactory 
-    {
+    function endLottery(address lotteryWinner) external onlyFactory {
         uint256 fee = address(this).balance * (10000 / feePercentage);
 
-        (bool success, ) = lotteryWinner.call{value: address(this).balance - fee}("");
+        (bool success,) = lotteryWinner.call{value: address(this).balance - fee}("");
         require(success, Lottery__CallFailed());
 
-        (bool feeSuccess, ) = lotteryFactory.call{value: fee}("");
+        (bool feeSuccess,) = lotteryFactory.call{value: fee}("");
         require(feeSuccess, Lottery__CallFailed());
 
         ///////////////////////
-            /* NFT LOGIC */
+        /* NFT LOGIC */
         ///////////////////////
 
         LotteryFactory(lotteryFactory).setActiveLottery(address(0));
@@ -146,9 +130,9 @@ contract Lottery is ERC20Capped {
         emit Lottery__LotteryClosed(lotteryWinner, address(this).balance - fee);
     }
 
-/*//////////////////////////////////////////////
-                    VIEW FUNCTIONS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        VIEW FUNCTIONS
+    //////////////////////////////////////////////*/
     function getLotteryId() public view returns (uint256) {
         return lotteryId;
     }

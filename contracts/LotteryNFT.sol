@@ -13,15 +13,15 @@ contract LotteryNFT is ERC721 {
     /*//////////////// MODIFIERS ////////////////*/
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor () ERC721("Fifu Fifu", "FIFU2") {}
+    constructor() ERC721("Fifu Fifu", "FIFU2") {}
 
     /*///////////// PUBLIC FUNCTIONS /////////////*/
 
     /*//////////// EXTERNAL FUNCTIONS ////////////*/
 
     /*//////////// PRIVATE FUNCTIONS ////////////*/
-    
+
     /*//////////// INTERNAL FUNCTIONS ////////////*/
-    
+
     /*////////////// VIEW FUNCTIONS //////////////*/
 }

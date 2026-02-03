@@ -1,24 +1,22 @@
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/********* IMPORTS *********/  
-import {Lottery} from "./Lottery.sol";
+/********* IMPORTS *********/ import {Lottery} from "./Lottery.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 contract LotteryFactory is Ownable2Step {
-
-/*//////////////////////////////////////////////
-                STATE VARIABLES 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                    STATE VARIABLES
+    //////////////////////////////////////////////*/
     uint256 private lotteryCount;
     address payable private activeLottery;
     bool private lotteryPendingWinner;
 
-/*//////////////////////////////////////////////
-                    ERRORS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        ERRORS
+    //////////////////////////////////////////////*/
     error LotteryFactory__ZeroAmount();
     error LotteryFactory__InsuffifientAccumulatedFees();
     error LotteryFactory__InvalidRecipient();
@@ -26,15 +24,15 @@ contract LotteryFactory is Ownable2Step {
     error LotteryFactory__ActiveLotteryExists();
     error LotteryFactory__NotLottery();
 
-/*//////////////////////////////////////////////
-                    EVENTS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                        EVENTS
+    //////////////////////////////////////////////*/
     event LotteryFactory__LotteryCreated(address lottery);
     event LotteryFactory__FeesWithdrawn(address recipient, uint256 amount);
 
-/*//////////////////////////////////////////////
-                  MODIFIERS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                      MODIFIERS
+    //////////////////////////////////////////////*/
     modifier onlyLottery() {
         // require(address(msg.sender).data == lotterydata, LotteryFactory__NotLottery());
         _;
@@ -45,18 +43,19 @@ contract LotteryFactory is Ownable2Step {
         _;
     }
 
-/*/////////////// CONSTRUCTOR ///////////////*/
-    constructor () {}
+    /*/////////////// CONSTRUCTOR ///////////////*/
+    constructor() {}
 
-/*//////////////////////////////////////////////
-                EXTERNAL FUNCTIONS
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                    EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////*/
     function createLottery(uint256 fee, uint256 ticketPriceInWei) external onlyOwner returns (address lottery) {
         require(!lotteryPendingWinner, LotteryFactory__ActiveLotteryExists());
-        
+
         lottery = address(new Lottery{salt: bytes32(lotteryCount)}(lotteryCount, fee, ticketPriceInWei));
         emit LotteryFactory__LotteryCreated(lottery);
         lotteryCount++;
+        lotteryPendingWinner = true;
         activeLottery = payable(lottery);
     }
 
@@ -74,7 +73,7 @@ contract LotteryFactory is Ownable2Step {
         require(amount <= address(this).balance, LotteryFactory__InsuffifientAccumulatedFees());
         require(recipient != address(0), LotteryFactory__InvalidRecipient());
 
-        (bool success, ) = recipient.call{value: amount}("");
+        (bool success,) = recipient.call{value: amount}("");
         require(success, LotteryFactory__CallFailed());
         emit LotteryFactory__FeesWithdrawn(recipient, amount);
     }
@@ -87,18 +86,14 @@ contract LotteryFactory is Ownable2Step {
         lotteryPendingWinner = pending;
     }
 
-/*//////////////////////////////////////////////
-                VIEW FUNCTIONS 
-/*////////////////////////////////////////////*/
+    /*//////////////////////////////////////////////
+                    VIEW FUNCTIONS
+    //////////////////////////////////////////////*/
     function getLotteryCount() public view returns (uint256) {
         return lotteryCount;
     }
 
     function getActiveLottery() public view returns (address payable) {
         return activeLottery;
-    }
-
-    function getLotteryPendingWinner() public view returns (bool) {
-        return lotteryPendingWinner;
     }
 }

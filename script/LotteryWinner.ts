@@ -1,14 +1,13 @@
 try {
   const lotteryAddress = args[0];
-  const ticketPriceInWei = args[1];
   let chain;
-  if (args[2] == 1) {
+  if (args[1] == 1) {
       chain = 'eth';
   }
-  else if (args[2] == 11155111) {
+  else if (args[1] == 11155111) {
       chain = 'sepolia';
   }
-  const randomNumber = args[3];
+  const randomNumber = args[2];
 
   let response = await Functions.makeHttpRequest({
     method: 'GET',
@@ -30,7 +29,7 @@ try {
     let cursor = response.data.cursor;
 
     for (let i = 0; i < lotteryEntries.length; i++) {
-        entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
+        entriesForAddress = lotteryEntries[i].balance;
         for (let j = 0; j < entriesForAddress; j++) {
           lotteryAddresses.push(lotteryEntries[i].owner_address);
         }
@@ -58,7 +57,7 @@ try {
       cursor = response.data.cursor;
 
       for (let i = 0; i < lotteryEntries.length; i++) {
-        entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);
+        entriesForAddress = lotteryEntries[i].balance;
         for (let j = 0; j < entriesForAddress; j++) {
           lotteryAddresses.push(lotteryEntries[i].owner_address);
         }

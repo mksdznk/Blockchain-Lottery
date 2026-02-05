@@ -11,7 +11,6 @@ contract Lottery is ERC20Capped {
     /*///////////////////////////////////////////////
                     STATE VARIABLES
     ///////////////////////////////////////////////*/
-    uint256 private lotteryId;
     uint256 private feePercentage; // in basis points
     uint256 private ticketPriceInWei;
     address private lotteryFactory;
@@ -50,13 +49,6 @@ contract Lottery is ERC20Capped {
         _;
     }
 
-    modifier setPendingWinner() {
-        _;
-        if (totalSupply() == cap()) {
-            LotteryFactory(lotteryFactory).setLotteryPendingWinner(true);
-        }
-    }
-
     modifier manageOwners(address sender, uint256 amount, address recipient) {
         /* if sender sends entire balance, number of owners is decremented */
         if (sender != address(0) && balanceOf(sender) == amount) {
@@ -71,11 +63,10 @@ contract Lottery is ERC20Capped {
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor(uint256 _lotteryId, uint256 _feePercentage, uint256 _ticketPriceInWei)
+    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap)
         ERC20("Lottery Ticket", "LT")
-        ERC20Capped(5000)
+        ERC20Capped(_cap)
     {
-        lotteryId = _lotteryId;
         feePercentage = _feePercentage;
         ticketPriceInWei = _ticketPriceInWei;
         lotteryFactory = msg.sender;
@@ -97,22 +88,32 @@ contract Lottery is ERC20Capped {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function purchaseTickets() external payable lotteryIsOpen setPendingWinner manageOwners(address(0), 0, msg.sender) {
-        uint256 tickets = msg.value;
-        require(tickets > 0, Lottery__ZeroValue());
-        require(tickets % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
+    function purchaseTickets() 
+        external 
+        payable 
+        lotteryIsOpen 
+        manageOwners(address(0), 0, msg.sender) 
+    {
+        require(msg.value > 0, Lottery__ZeroValue());
+        require(msg.value % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
+        uint256 tickets = msg.value / ticketPriceInWei;
 
         _mint(msg.sender, tickets);
         emit Lottery__TicketsPurchased(msg.sender, tickets);
     }
 
-    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) {
-        require(amount % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
-        _transfer(msg.sender, recipient, amount); // ← this calls _update(from=msg.sender, recipient, amount) internally
+    function transferTickets(address recipient, uint256 amount) 
+        external 
+        manageOwners(msg.sender, amount, recipient) 
+    {
+        _transfer(msg.sender, recipient, amount); 
         emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }
 
-    function endLottery(address lotteryWinner) external onlyFactory {
+    function endLottery(address lotteryWinner) 
+        external 
+        onlyFactory 
+    {
         uint256 fee = address(this).balance * (10000 / feePercentage);
 
         (bool success,) = lotteryWinner.call{value: address(this).balance - fee}("");
@@ -126,16 +127,13 @@ contract Lottery is ERC20Capped {
         ///////////////////////
 
         LotteryFactory(lotteryFactory).setActiveLottery(address(0));
-        LotteryFactory(lotteryFactory).setLotteryPendingWinner(false);
+        LotteryFactory(lotteryFactory).setLotteryPending(false);
         emit Lottery__LotteryClosed(lotteryWinner, address(this).balance - fee);
     }
 
     /*//////////////////////////////////////////////
                         VIEW FUNCTIONS
     //////////////////////////////////////////////*/
-    function getLotteryId() public view returns (uint256) {
-        return lotteryId;
-    }
 
     function getFeePercentage() public view returns (uint256) {
         return feePercentage;
@@ -155,5 +153,13 @@ contract Lottery is ERC20Capped {
 
     function getNumberOfOwners() public view returns (uint256) {
         return numberOfOwners;
+    }
+
+    function getTickets() public view returns (uint256) {
+        return balanceOf(msg.sender) / ticketPriceInWei;
+    }
+
+    function getTicketsLeft() public view returns (uint256) {
+        return (cap() - totalSupply()) / ticketPriceInWei;
     }
 }

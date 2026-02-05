@@ -16,8 +16,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
 
     /*///////////////////////////////////////////////
                     STATE VARIABLES
-    /*/
-    ////////////////////////////////////////////*/
+    ///////////////////////////////////////////////*/
     bytes32 private s_lastFunctionsRequestId;
     uint256 private s_lastVRFRequestId;
     bytes private s_lastFunctionsResponse;
@@ -30,7 +29,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     uint256 private s_vrfSubscriptionId;
     uint64 private immutable i_functionsSubscriptionId;
     address private lotteryFactory;
-    uint32 gasLimit = 300_000;
+    uint32 private gasLimit = 300_000;
     address private router; // = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0; //// ENTER YOUR ROUTER ADDRESS
     bytes32 private donID; // = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; //// ENTER YOUR DON ID
     string private source = "try {const lotteryAddress = args[0];"
@@ -40,7 +39,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         "params: {chain: chain,limit: '100',order: 'DESC'},headers: {accept: 'application/json',"
         "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'}});"
         "let lotteryEntries = response.data.result;let lotteryAddresses = [];let entriesForAddress = 0;let cursor = response.data.cursor;"
-        "for (let i = 0; i < lotteryEntries.length; i++) {entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);"
+        "for (let i = 0; i < lotteryEntries.length; i++) {entriesForAddress = lotteryEntries[i].balance;"
         "for (let j = 0; j < entriesForAddress; j++) {lotteryAddresses.push(lotteryEntries[i].owner_address);}}"
         "while (cursor != null) {response = await Functions.makeHttpRequest({"
         "method: 'GET',url: `https://deep-index.moralis.io/api/v2.2/erc20/${lotteryAddress}/owners`,"
@@ -48,7 +47,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         "'X-API-Key': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjM3NWJhN2U0LWI5OGItNDMyMS04ZDZlLWU2ZjFlZjBlOGJkOSIsIm9yZ0lkIjoiNDk0MTg2IiwidXNlcklkIjoiNTA4NTM1IiwidHlwZUlkIjoiYjEzNGI4YmMtMjA3MS00ODk4LWE3OTItZDU0MjlmNGE2ZDdjIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NjkxNzkzNzEsImV4cCI6NDkyNDkzOTM3MX0.IFUfq-1G7tyUOFFfsM4lsWEQJzY9qiZHtP_1KSuv5Hk'"
         "}});lotteryEntries = response.data.result;entriesForAddress = 0;"
         "cursor = response.data.cursor;for (let i = 0; i < lotteryEntries.length; i++) {"
-        "entriesForAddress = Math.floor(lotteryEntries[i].balance / ticketPriceInWei);for (let j = 0; j < entriesForAddress; j++) {"
+        "entriesForAddress = lotteryEntries[i].balance;for (let j = 0; j < entriesForAddress; j++) {"
         "lotteryAddresses.push(lotteryEntries[i].owner_address);}}}if (response.error) {"
         "throw new Error(`API error: ${response.error}`);}const winnerIndex = randomNumber % lotteryAddresses.length;"
         "return Functions.encodeString(lotteryAddresses[winnerIndex]);} catch (error) {console.error('Error:', error);"
@@ -82,13 +81,12 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         address _router,
         bytes32 _donID,
         uint64 _functionsSubscriptionId,
-        uint64 _vrfSubscriptionId,
+        uint256 _vrfSubscriptionId,
         address _vrfCoordinator,
         address _lotteryFactory
     )
         FunctionsClient(router)
         VRFConsumerBaseV2Plus(_vrfCoordinator) /* VRF vrfCoordinator address is address deployed to each network by Chainlink to handle and verify VRF https://docs.chain.link/vrf/v2-5/supported-networks */
-
     {
         router = _router;
         donID = _donID;

@@ -1,7 +1,8 @@
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/********* IMPORTS *********/ import {Lottery} from "./Lottery.sol";
+/********* IMPORTS *********/ 
+import {Lottery} from "./Lottery.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
@@ -11,8 +12,12 @@ contract LotteryFactory is Ownable2Step {
                     STATE VARIABLES
     //////////////////////////////////////////////*/
     uint256 private lotteryCount;
+    address private oracle;
     address payable private activeLottery;
-    bool private lotteryPendingWinner;
+    bool private lotteryPending;
+
+    mapping(address => bool) private isLottery;
+    mapping(uint256 => address) private lotteries;
 
     /*//////////////////////////////////////////////
                         ERRORS
@@ -23,6 +28,9 @@ contract LotteryFactory is Ownable2Step {
     error LotteryFactory__CallFailed();
     error LotteryFactory__ActiveLotteryExists();
     error LotteryFactory__NotLottery();
+    error LotteryFactory__NotOracle();
+    error LotteryFactory__OracleNotSet();
+    error LotteryFactory__InvalidCap();
 
     /*//////////////////////////////////////////////
                         EVENTS
@@ -34,12 +42,12 @@ contract LotteryFactory is Ownable2Step {
                       MODIFIERS
     //////////////////////////////////////////////*/
     modifier onlyLottery() {
-        // require(address(msg.sender).data == lotterydata, LotteryFactory__NotLottery());
+        require(isLottery[msg.sender], LotteryFactory__NotLottery());
         _;
     }
 
     modifier onlyOracle() {
-        // require(address(msg.sender).data == oracledata, LotteryFactory__NotOracle());
+        require(msg.sender == oracle, LotteryFactory__NotOracle());
         _;
     }
 
@@ -49,17 +57,21 @@ contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function createLottery(uint256 fee, uint256 ticketPriceInWei) external onlyOwner returns (address lottery) {
-        require(!lotteryPendingWinner, LotteryFactory__ActiveLotteryExists());
+    function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap) external onlyOwner returns (address lottery) {
+        require(!lotteryPending, LotteryFactory__ActiveLotteryExists());
+        require(oracle != address(0), LotteryFactory__OracleNotSet());
+        require(cap > 0 && cap <= 5000, LotteryFactory__InvalidCap());
 
-        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(lotteryCount, fee, ticketPriceInWei));
+        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(fee, ticketPriceInWei, cap));
         emit LotteryFactory__LotteryCreated(lottery);
+        lotteries[lotteryCount] = lottery;
+        isLottery[lottery] = true;
         lotteryCount++;
-        lotteryPendingWinner = true;
+        lotteryPending = true;
         activeLottery = payable(lottery);
     }
 
-    function endLottery(address payable lottery, address lotteryWinner) external onlyOwner {
+    function endLottery(address payable lottery, address lotteryWinner) external onlyOracle {
         require(lottery == activeLottery, LotteryFactory__NotLottery());
         require(lotteryWinner != address(0), LotteryFactory__InvalidRecipient());
 
@@ -78,22 +90,31 @@ contract LotteryFactory is Ownable2Step {
         emit LotteryFactory__FeesWithdrawn(recipient, amount);
     }
 
+    function setOracle(address _oracle) external onlyOwner {
+        oracle = _oracle;
+    }
+
     function setActiveLottery(address lottery) external onlyLottery {
         activeLottery = payable(lottery);
     }
 
-    function setLotteryPendingWinner(bool pending) external onlyLottery {
-        lotteryPendingWinner = pending;
+    function setLotteryPending(bool _lotteryPending) external onlyLottery {
+        lotteryPending = _lotteryPending;
     }
 
     /*//////////////////////////////////////////////
                     VIEW FUNCTIONS
     //////////////////////////////////////////////*/
+
+    function getActiveLottery() public view returns (address payable) {
+        return activeLottery;
+    }
+
     function getLotteryCount() public view returns (uint256) {
         return lotteryCount;
     }
 
-    function getActiveLottery() public view returns (address payable) {
-        return activeLottery;
+    function getLotteryWithId(uint256 id) public view returns (address) {
+        return lotteries[id];
     }
 }

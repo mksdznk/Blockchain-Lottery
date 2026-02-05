@@ -1,8 +1,7 @@
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/********* IMPORTS *********/ 
-import {Lottery} from "./Lottery.sol";
+/********* IMPORTS *********/ import {Lottery} from "./Lottery.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
@@ -57,7 +56,11 @@ contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap) external onlyOwner returns (address lottery) {
+    function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap)
+        external
+        onlyOwner
+        returns (address lottery)
+    {
         require(!lotteryPending, LotteryFactory__ActiveLotteryExists());
         require(oracle != address(0), LotteryFactory__OracleNotSet());
         require(cap > 0 && cap <= 5000, LotteryFactory__InvalidCap());

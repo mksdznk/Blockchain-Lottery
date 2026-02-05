@@ -88,12 +88,7 @@ contract Lottery is ERC20Capped {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function purchaseTickets() 
-        external 
-        payable 
-        lotteryIsOpen 
-        manageOwners(address(0), 0, msg.sender) 
-    {
+    function purchaseTickets() external payable lotteryIsOpen manageOwners(address(0), 0, msg.sender) {
         require(msg.value > 0, Lottery__ZeroValue());
         require(msg.value % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
         uint256 tickets = msg.value / ticketPriceInWei;
@@ -102,18 +97,12 @@ contract Lottery is ERC20Capped {
         emit Lottery__TicketsPurchased(msg.sender, tickets);
     }
 
-    function transferTickets(address recipient, uint256 amount) 
-        external 
-        manageOwners(msg.sender, amount, recipient) 
-    {
-        _transfer(msg.sender, recipient, amount); 
+    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) {
+        _transfer(msg.sender, recipient, amount);
         emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }
 
-    function endLottery(address lotteryWinner) 
-        external 
-        onlyFactory 
-    {
+    function endLottery(address lotteryWinner) external onlyFactory {
         uint256 fee = address(this).balance * (10000 / feePercentage);
 
         (bool success,) = lotteryWinner.call{value: address(this).balance - fee}("");

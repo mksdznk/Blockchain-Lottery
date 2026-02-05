@@ -87,6 +87,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     )
         FunctionsClient(router)
         VRFConsumerBaseV2Plus(_vrfCoordinator) /* VRF vrfCoordinator address is address deployed to each network by Chainlink to handle and verify VRF https://docs.chain.link/vrf/v2-5/supported-networks */
+
     {
         router = _router;
         donID = _donID;

@@ -19,27 +19,22 @@ contract LotteryDeploy is Script {
         address vrfCoordinator = 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B;
 
         vm.startBroadcast(deployerKey);
-            // DEPLOY LOTTERY FACTORY
-            console.log("Account: ", deployerAddress);
-            LotteryFactory lotteryFactory = new LotteryFactory();
+        // DEPLOY LOTTERY FACTORY
+        console.log("Account: ", deployerAddress);
+        LotteryFactory lotteryFactory = new LotteryFactory();
 
-            // DEPLOY LOTTERY FUNCTIONS
-            LotteryFunctions lotteryFunctions = new LotteryFunctions(        
-                router,
-                donID,
-                functionsSubscriptionId,
-                vrfSubscriptionId,
-                vrfCoordinator,
-                address(lotteryFactory)
-            );
+        // DEPLOY LOTTERY FUNCTIONS
+        LotteryFunctions lotteryFunctions = new LotteryFunctions(
+            router, donID, functionsSubscriptionId, vrfSubscriptionId, vrfCoordinator, address(lotteryFactory)
+        );
 
-            // DEPLOY LOTTERY NFT
-            // LotteryNFT lotteryNFT = new LotteryNFT();
+        // DEPLOY LOTTERY NFT
+        // LotteryNFT lotteryNFT = new LotteryNFT();
 
-            console.log("LotteryFactory deployed to:", address(lotteryFactory));
-            console.log("LotteryFunctions deployed to:", address(lotteryFunctions));
-            // console.log("LotteryNFT deployed to:", address(lotteryNFT));
-        
-        vm.stopBroadcast();    
+        console.log("LotteryFactory deployed to:", address(lotteryFactory));
+        console.log("LotteryFunctions deployed to:", address(lotteryFunctions));
+        // console.log("LotteryNFT deployed to:", address(lotteryNFT));
+
+        vm.stopBroadcast();
     }
 }

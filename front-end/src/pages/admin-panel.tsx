@@ -1,23 +1,20 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import LotteryImage from '../images/lottery-slots-eth.png';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { useAccount } from 'wagmi';
+import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
-const Home: NextPage = () => {
-  const { isConnected } = useAccount();
-  const router = useRouter();
+const AdminPanel: NextPage = () => {
+    const { isConnected } = useAccount();
+    const router = useRouter();
 
-  useEffect(() => {
-    if (isConnected) {
-      router.push('/lotteries');
+    useEffect(() => {
+    if (!isConnected) {
+        router.push('/');
     }
-  }, [isConnected, router]);
+    }, [isConnected, router]);
 
   return (
     <div className={styles.container}>
@@ -34,15 +31,13 @@ const Home: NextPage = () => {
         <ConnectButton />
 
         <h1 className={styles.title}>
-          Welcome to the <a href="https://etherscan.io/">Blockchain Lottery</a> {/* add etherscan link of contract */}
+          Admin Panel {/* add etherscan link of contract */}
         </h1>
+        {/* <p>isConnected: {isConnected}</p> */}
 
-        <p className={styles.description}>
-          Connect wallet to participate in the lottery!
-        </p>
-
-        <Image src={LotteryImage} alt='lottery slots'/>
-        <Link href='/admin-panel'>Admin Panel</Link>
+        
+        <button>Create New Lottery</button>
+    
 
         {/* <div className={styles.grid}>
           <a className={styles.card} href="https://rainbowkit.com">
@@ -98,4 +93,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default AdminPanel;

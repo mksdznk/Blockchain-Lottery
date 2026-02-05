@@ -1,11 +1,21 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import LotteryImage from '../images/lottery-slots-eth.png';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import Image from 'next/image';
+import { useAccount } from 'wagmi';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 
-const Home: NextPage = () => {
+const Lotteries: NextPage = () => {
+    const { isConnected } = useAccount();
+    const router = useRouter();
+
+    useEffect(() => {
+    if (!isConnected) {
+        router.push('/');
+    }
+    }, [isConnected, router]);
+
   return (
     <div className={styles.container}>
       <Head>
@@ -21,9 +31,12 @@ const Home: NextPage = () => {
         <ConnectButton />
 
         <h1 className={styles.title}>
-          Admin Panel {/* add etherscan link of contract */}
+          Lotteries {/* add etherscan link of contract */}
         </h1>
+        {/* <p>isConnected: {isConnected}</p> */}
+        <button onClick={() => router.push('/admin-panel')}>Go to admin panel</button>
 
+        
     
 
         {/* <div className={styles.grid}>
@@ -80,4 +93,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Lotteries;

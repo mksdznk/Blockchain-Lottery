@@ -1,14 +1,27 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi'
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
-import { useAccount } from 'wagmi';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
+import { lotteryFactoryContractConfig } from '../contracts/lotteryFactoryContractConfig';
 
 const AdminPanel: NextPage = () => {
     const { isConnected } = useAccount();
     const router = useRouter();
+
+    const { data: owner} = useReadContract({
+      ...lotteryFactoryContractConfig,
+      functionName: 'owner',
+      args: [],
+    })
+
+    const { data: lotteryCount} = useReadContract({
+      ...lotteryFactoryContractConfig,
+      functionName: 'getLotteryCount',
+      args: [],
+    })
 
     useEffect(() => {
     if (!isConnected) {
@@ -33,6 +46,7 @@ const AdminPanel: NextPage = () => {
         <h1 className={styles.title}>
           Admin Panel {/* add etherscan link of contract */}
         </h1>
+        <a>Owner: {owner}</a>
         {/* <p>isConnected: {isConnected}</p> */}
 
         

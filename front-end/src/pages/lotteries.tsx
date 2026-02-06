@@ -1,12 +1,13 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi'
-import { type UseReadContractReturnType } from 'wagmi'
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import { lotteryFactoryContractConfig } from '../contracts/lotteryFactoryContractConfig';
+import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
 
 const Lotteries: NextPage = () => {
     const { isConnected, address } = useAccount();
@@ -44,7 +45,9 @@ const Lotteries: NextPage = () => {
       </Head>
 
       <main className={styles.main}>
-        <ConnectButton />
+        <div className='pt-1'>
+          <ConnectButton/>
+        </div>
 
         <h1 className={styles.title}>
           Lotteries {/* add etherscan link of contract */}
@@ -53,7 +56,11 @@ const Lotteries: NextPage = () => {
         
         {/* <p>isConnected: {isConnected}</p> */}
         <button onClick={() => router.push('/admin-panel')}>Go to admin panel</button>
-        <a>{String(owner) == String(address)}</a>    
+        <Button ></Button>
+        <h1 className="text-2xl font-bold underline">
+          Hello world!
+        </h1>  
+        { owner == address && <h2 className="text-2xl font-bold underline">You are the owner</h2> }
 
         {/* <div className={styles.grid}>
           <a className={styles.card} href="https://rainbowkit.com">

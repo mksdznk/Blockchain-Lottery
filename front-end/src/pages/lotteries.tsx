@@ -1,19 +1,71 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useReadContract, useWriteContract, useBalance } from 'wagmi'
+import { 
+  useAccount, 
+  useReadContract, 
+  useReadContracts, 
+  useWriteContract, 
+  useBalance, 
+  useWaitForTransactionReceipt 
+} from 'wagmi'
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { 
+  useEffect, 
+  useMemo, 
+  useState 
+} from 'react';
 import { lotteryFactoryContractConfig } from '../contracts/lotteryFactoryContractConfig';
-import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { 
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Field } from '@/components/ui/field';
+ import { Input } from '@/components/ui/input';
+ import EthImage from 'public/images/eth-1.png';
+ import GitHubImage from 'public/images/GitHub_Lockup_Black.svg'
+ import Image from 'next/image';
+
+
+//CONDITIONAL STYLING
+import { cn } from '@/lib/utils';
+import { 
+  Popover,
+  PopoverTrigger, 
+  PopoverContent, 
+  PopoverHeader, 
+  PopoverTitle, 
+  PopoverDescription 
+} from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+import { lotteryContractConfig } from 'src/contracts/lotteryContractConfig';
 
 const Lotteries: NextPage = () => {
-    const { isConnected, address } = useAccount();
+    const { isConnected, address: user, chainId} = useAccount();
     const router = useRouter();
 
-    // type loteryCount = UseReadContractReturnType<`0x${string}`, Error>
+    type Lottery = {
+      id: number;
+      address: string;
+      winner: string;
+      winningAmount: number;
+      feePercentage: number;
+    }
+    
+    const pastLotteries: Lottery[] = [{
+      id: 1,
+      address: '0x123',
+      winner: '0x123',
+      winningAmount: 100,
+      feePercentage: 10
+    }];
 
     useEffect(() => {
     if (!isConnected) {
@@ -21,17 +73,176 @@ const Lotteries: NextPage = () => {
     }
     }, [isConnected, router]);
 
+    const [ticketsToBuy, setTicketsToBuy] = useState(0);
+
     const { data: owner} = useReadContract({
       ...lotteryFactoryContractConfig,
       functionName: 'owner',
       args: [],
-    })
+    });
 
     const { data: lotteryCount} = useReadContract({
       ...lotteryFactoryContractConfig,
       functionName: 'getLotteryCount',
       args: [],
+    }); 
+
+    const lengthOfPastLotteries = Number(lotteryCount ?? 0);
+
+    const lotteryCalls = useMemo(() =>
+      Array.from({length: lengthOfPastLotteries}, (_, i) => ({
+        ...lotteryFactoryContractConfig,
+        functionName: 'getLotteryWithId',
+        args: [BigInt(i)]
+      })),
+      [lengthOfPastLotteries]
+    );
+    console.log(lotteryCalls);
+
+    const { data: lotteriesData, isLoading: loadingLotteries} = useReadContracts({
+      contracts: lotteryCalls as any,
     })
+
+    console.log(lotteriesData);
+    
+    const { data: activeLottery} = useReadContract({
+      ...lotteryFactoryContractConfig,
+      functionName: 'getActiveLottery',
+      args: [],
+    });
+
+    
+    const lotteryAddress = activeLottery !== null || activeLottery !== undefined ? String(activeLottery) : null;
+    
+    const {data: prizePoolSize,} = useBalance({
+      address: lotteryFactoryContractConfig.address,
+    });
+
+    const {data: userTickets} = useBalance({
+      address: user,
+      token: lotteryAddress as `0x{string}`,
+    });
+
+    const { data: feePercentage } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'getFeePercentage',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    })
+    
+
+    const { data: maxTickets } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'cap',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    })
+    
+
+    const { data: ticketsLeft } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'getTicketsLeft',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    })
+    
+    
+    const { data: ticketPriceInWei } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'getTicketPriceInWei',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    })
+    
+
+    const { data: numberOfOwners } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'getNumberOfOwners',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    })
+
+    const {
+      data: buyTicketsHash,
+      isPending: isBuying,
+      writeContract: buyTicketsWriteContract,
+    } = useWriteContract();
+
+    const { 
+      isLoading: isBuyingLoading,
+      isSuccess: isBuyingSuccess,
+      isError: isBuyingError,
+    } = useWaitForTransactionReceipt({
+      hash: buyTicketsHash,
+    });
+    
+    function buyTickets() {
+      console.log(ticketsToBuy);
+        buyTicketsWriteContract({
+          address: lotteryAddress as `0x{string}`,
+          abi: lotteryContractConfig.abi,
+          functionName: 'purchaseTickets',
+          value: BigInt(ticketsToBuy * Number(ticketPriceInWei)),
+          args: [],
+        });
+    }
+
+    function copyLotteryAddress() {
+      navigator.clipboard.writeText(String(activeLottery));
+      toast.success("Address copied to clipboard", {position: 'top-center'});
+    }
+
+    function lotteryEtherscanLink() {
+      if (chainId === 1) {
+        return `https://etherscan.io/address/${String(activeLottery)}`
+      }
+      else if (chainId === 11155111) {
+        return `https://sepolia.etherscan.io/address/${String(activeLottery)}`
+      }
+    }
+
+    const count = Number(lotteryCount ?? 0);
+
+
+
+    useEffect(() => {
+      if (isBuyingSuccess) {
+        toast.success('Successfully bought ticket/s', {position: 'top-center'});
+      }
+
+      if (isBuyingError) {
+        toast.error('Error buying ticket/s', {position: 'top-center'});
+      }
+
+    })
+
+    // useEffect(() => {
+    //   if (Number(lotteryCount) !== 0) {
+    //     for (let i = 0; i < Number(lotteryCount); i++) {
+    //       const {data: lotteryData} = useReadContract({
+    //         ...lotteryFactoryContractConfig,
+    //         functionName: 'getLotteryWithId',
+    //         args: [i],
+    //       });
+    //       console.log(lotteryData);
+    //     }
+    //   }
+    // });
 
   return (
     <div className={styles.container}>
@@ -41,76 +252,142 @@ const Lotteries: NextPage = () => {
           content="Generated by @rainbow-me/create-rainbowkit"
           name="description"
         />
-        <link href="/favicon.ico" rel="icon" />
+        <link href='public/images/eth-icon.ico' type='image/svg+xml' rel="icon" />
       </Head>
 
-      <main className={styles.main}>
-        <div className='pt-1'>
-          <ConnectButton/>
+      <header className="flex justify-end">
+        <div className='pt-2'>
+          <ConnectButton />
+        </div>
+      </header>
+
+        <main className="flex flex-col">
+        <div className='flex justify-start m-3'>
+          <h1 className='text-5xl p-3'>
+            Lotteries {/* add etherscan link of contract */}
+          </h1>
+          <div className='pt-5'>
+            { owner == user && <Button onClick={() => router.push('/admin-panel')}>Go to admin panel</Button> }
+          </div>
         </div>
 
-        <h1 className={styles.title}>
-          Lotteries {/* add etherscan link of contract */}
-        </h1>
+        <div className='grid grid-cols-3'>
+          <Card className='m-4 flex flex-col'>
+          <CardHeader>
+            <div className='flex'>
+              <CardTitle className='mt-1 mr-1'>Lottery id: {Number(lotteryCount) - 1} </CardTitle>
+              <Badge className='bg-green-400 mt-0'>Active</Badge>
+            </div>
+            <CardTitle>
+              Lottery address:  
+              <a href={lotteryEtherscanLink()}>
+                { ' ' + String(activeLottery).slice(0, 6) + "..." + String(activeLottery).slice(38) } 
+              </a>  
+              <Button 
+                className={cn(activeLottery == 0 ? "hidden" : "h-6 w-12 m-2")} 
+                onClick={copyLotteryAddress}>
+                  copy
+              </Button> 
+            </CardTitle>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button className='w-min'variant="outline">More Info</Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverHeader>
+                  <PopoverDescription>
+                    Ticket price: {Number(ticketPriceInWei)} Wei
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Prize pool size: {Number(prizePoolSize?.value)} Wei
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Tickets left: {Number(ticketsLeft)} / {Number(maxTickets)}
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Number of owners: {Number(numberOfOwners)} / {500}
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Fee percentage: { Number(feePercentage) / 100 } %
+                  </PopoverDescription>       
+                </PopoverHeader>
+              </PopoverContent>
+            </Popover>
+          </CardHeader>
 
-        
-        {/* <p>isConnected: {isConnected}</p> */}
-        <button onClick={() => router.push('/admin-panel')}>Go to admin panel</button>
-        <Button ></Button>
-        <h1 className="text-2xl font-bold underline">
-          Hello world!
-        </h1>  
-        { owner == address && <h2 className="text-2xl font-bold underline">You are the owner</h2> }
+            <CardContent>
+              <Image src={EthImage} alt="img" />
+            </CardContent>
+            <CardFooter className='flex flex-col'>
+                  <code> {Number(userTickets?.value) > 0 ? "You have " + Number(userTickets?.value) + " tickets" : ""} </code>
+                  <Button 
+                    className='w-full'
+                    disabled={Number(ticketsLeft) == 0 || ticketsToBuy == 0 || isBuying || isBuyingLoading}
+                    onClick={buyTickets}>
+                      {isBuying || isBuyingLoading? 'Buying...' :  'Buy ticket / s'}
+                  </Button>
+                  <Field className='flex flex-row m-1'>
+                    <Input 
+                      type="number" 
+                      step={1} 
+                      min={1} 
+                      placeholder="Number of tickets" 
+                      onChange={(e) => setTicketsToBuy(Number(e.target.value))} />
+                    <code className='p-2'>
+                      = {Number(ticketPriceInWei) * ticketsToBuy} Wei
+                    </code>
+                  </Field>
+                
+            </CardFooter>
+          </Card>
 
-        {/* <div className={styles.grid}>
-          <a className={styles.card} href="https://rainbowkit.com">
-            <h2>RainbowKit Documentation &rarr;</h2>
-            <p>Learn how to customize your wallet connection flow.</p>
-          </a>
+        </div>
 
-          <a className={styles.card} href="https://wagmi.sh">
-            <h2>wagmi Documentation &rarr;</h2>
-            <p>Learn how to interact with Ethereum.</p>
-          </a>
+        <Separator></Separator>
 
-          <a
-            className={styles.card}
-            href="https://github.com/rainbow-me/rainbowkit/tree/main/examples"
-          >
-            <h2>RainbowKit Examples &rarr;</h2>
-            <p>Discover boilerplate example RainbowKit projects.</p>
-          </a>
+        <h1 className='text-3xl p-3'>
+          Past Lotteries {/* add etherscan link of contract */}
+        </h1>        
+        <div className='grid grid-flow-row-dense grid-cols-3 grid-rows-3'>
 
-          <a className={styles.card} href="https://nextjs.org/docs">
-            <h2>Next.js Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+          {pastLotteries.map((lottery) => (
+            <Card className='m-4 flex flex-col'>
+            <CardHeader>
+              <div className='flex'>
+                <CardTitle className='mt-1 mr-1'>Lottery id: {lottery.id} </CardTitle>
+                <Badge className='bg-red-400 mt-0'>Ended</Badge>
+              </div>
+              <CardTitle className=''>Lottery address: <a href="https://etherscan.io/">{lottery.address} </a></CardTitle>
+              <Popover>
+              <PopoverTrigger asChild>
+                <Button className='w-min'variant="outline">More Info</Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <PopoverHeader>
+                  <PopoverTitle>Title</PopoverTitle>
+                  <PopoverDescription>Description text here.</PopoverDescription>
+                </PopoverHeader>
+              </PopoverContent>
+            </Popover>
+            </CardHeader>
 
-          <a
-            className={styles.card}
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-          >
-            <h2>Next.js Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            className={styles.card}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div> */}
+            <CardContent>
+              <Image src={EthImage} alt="img"/>
+            </CardContent>
+            <CardFooter className='flex flex-col'>
+            </CardFooter>
+          </Card>  
+          ))}
+        </div>
       </main>
 
       <footer className={styles.footer}>
         <h5>
-          Made by mksdznk. Full project code available on <a href="https://github.com/mksdznk/blockchain-lottery">GitHub</a>
+          Made by mksdznk. Full project code available on 
+          <a href="https://github.com/mksdznk/blockchain-lottery">
+            <Image src={GitHubImage} alt='GitHub' width={100} height={100}/>
+          </a>
         </h5>
-        
       </footer>
     </div>
   );

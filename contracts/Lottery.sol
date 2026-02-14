@@ -14,7 +14,9 @@ contract Lottery is ERC20Capped {
     uint256 private feePercentage; // in basis points
     uint256 private ticketPriceInWei;
     address private lotteryFactory;
+    uint256 private maxOwners;
     uint256 private numberOfOwners; // to keep track of limited number of owners
+    address private lotteryWinner;
 
     /*//////////////////////////////////////////////
                         ERRORS
@@ -57,19 +59,21 @@ contract Lottery is ERC20Capped {
 
         /* if recipienct has no balance prior to transfer, number of owners is incremented */
         if (balanceOf(recipient) == 0) {
+            require(numberOfOwners < maxOwners, Lottery__TooManyOwners());
             numberOfOwners++;
         }
         _;
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap)
+    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap, uint256 _maxOwners)
         ERC20("Lottery Ticket", "LT")
         ERC20Capped(_cap)
     {
         feePercentage = _feePercentage;
         ticketPriceInWei = _ticketPriceInWei;
         lotteryFactory = msg.sender;
+        maxOwners = _maxOwners;
     }
 
     /*//////////////////////////////////////////////
@@ -81,6 +85,10 @@ contract Lottery is ERC20Capped {
 
     function transfer(address, uint256) public virtual override returns (bool) {
         revert Lottery__DirectTransfersDisabled();
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 0;
     }
 
     receive() external payable {}
@@ -102,22 +110,21 @@ contract Lottery is ERC20Capped {
         emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }
 
-    function endLottery(address lotteryWinner) external onlyFactory {
+    function endLottery(address _lotteryWinner) external onlyFactory returns (uint256 reward) {
         uint256 fee = address(this).balance * (10000 / feePercentage);
 
-        (bool success,) = lotteryWinner.call{value: address(this).balance - fee}("");
+        reward = address(this).balance - fee;
+
+        (bool success,) = _lotteryWinner.call{value: reward}("");
         require(success, Lottery__CallFailed());
 
         (bool feeSuccess,) = lotteryFactory.call{value: fee}("");
         require(feeSuccess, Lottery__CallFailed());
 
-        ///////////////////////
-        /* NFT LOGIC */
-        ///////////////////////
-
+        lotteryWinner = _lotteryWinner;
         LotteryFactory(lotteryFactory).setActiveLottery(address(0));
         LotteryFactory(lotteryFactory).setLotteryPending(false);
-        emit Lottery__LotteryClosed(lotteryWinner, address(this).balance - fee);
+        emit Lottery__LotteryClosed(_lotteryWinner, address(this).balance - fee);
     }
 
     /*//////////////////////////////////////////////
@@ -144,11 +151,11 @@ contract Lottery is ERC20Capped {
         return numberOfOwners;
     }
 
-    function getTickets() public view returns (uint256) {
-        return balanceOf(msg.sender) / ticketPriceInWei;
+    function getMaxOwners() public view returns (uint256) {
+        return maxOwners;
     }
 
     function getTicketsLeft() public view returns (uint256) {
-        return (cap() - totalSupply()) / ticketPriceInWei;
+        return (cap() - totalSupply());
     }
 }

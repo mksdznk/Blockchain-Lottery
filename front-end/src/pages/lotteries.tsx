@@ -26,7 +26,6 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Field } from '@/components/ui/field';
  import { Input } from '@/components/ui/input';
  import EthImage from 'public/images/eth-1.png';
  import GitHubImage from 'public/images/GitHub_Lockup_Black.svg'
@@ -87,23 +86,20 @@ const Lotteries: NextPage = () => {
       args: [],
     }); 
 
-    const lengthOfPastLotteries = Number(lotteryCount ?? 0);
+    const count = Number(lotteryCount ?? 0);
 
     const lotteryCalls = useMemo(() =>
-      Array.from({length: lengthOfPastLotteries}, (_, i) => ({
+      Array.from({length: count}, (_, i) => ({
         ...lotteryFactoryContractConfig,
         functionName: 'getLotteryWithId',
         args: [BigInt(i)]
       })),
-      [lengthOfPastLotteries]
+      [count]
     );
-    console.log(lotteryCalls);
 
     const { data: lotteriesData, isLoading: loadingLotteries} = useReadContracts({
       contracts: lotteryCalls as any,
     })
-
-    console.log(lotteriesData);
     
     const { data: activeLottery} = useReadContract({
       ...lotteryFactoryContractConfig,
@@ -131,7 +127,7 @@ const Lotteries: NextPage = () => {
       query: {
         enabled: activeLottery !== null || activeLottery !== undefined,
       },
-    })
+    });
     
 
     const { data: maxTickets } = useReadContract({
@@ -142,7 +138,7 @@ const Lotteries: NextPage = () => {
       query: {
         enabled: activeLottery !== null || activeLottery !== undefined,
       },
-    })
+    });
     
 
     const { data: ticketsLeft } = useReadContract({
@@ -153,7 +149,7 @@ const Lotteries: NextPage = () => {
       query: {
         enabled: activeLottery !== null || activeLottery !== undefined,
       },
-    })
+    });
     
     
     const { data: ticketPriceInWei } = useReadContract({
@@ -164,7 +160,7 @@ const Lotteries: NextPage = () => {
       query: {
         enabled: activeLottery !== null || activeLottery !== undefined,
       },
-    })
+    });
     
 
     const { data: numberOfOwners } = useReadContract({
@@ -175,7 +171,7 @@ const Lotteries: NextPage = () => {
       query: {
         enabled: activeLottery !== null || activeLottery !== undefined,
       },
-    })
+    });
 
     const {
       data: buyTicketsHash,
@@ -215,10 +211,6 @@ const Lotteries: NextPage = () => {
         return `https://sepolia.etherscan.io/address/${String(activeLottery)}`
       }
     }
-
-    const count = Number(lotteryCount ?? 0);
-
-
 
     useEffect(() => {
       if (isBuyingSuccess) {
@@ -326,8 +318,9 @@ const Lotteries: NextPage = () => {
                     onClick={buyTickets}>
                       {isBuying || isBuyingLoading? 'Buying...' :  'Buy ticket / s'}
                   </Button>
-                  <Field className='flex flex-row m-1'>
+                  <div className='w-full flex flex-row'>
                     <Input 
+                      className='w-1/2'
                       type="number" 
                       step={1} 
                       min={1} 
@@ -336,7 +329,7 @@ const Lotteries: NextPage = () => {
                     <code className='p-2'>
                       = {Number(ticketPriceInWei) * ticketsToBuy} Wei
                     </code>
-                  </Field>
+                  </div>
                 
             </CardFooter>
           </Card>

@@ -1,10 +1,11 @@
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/********* IMPORTS *********/ import {Lottery} from "./Lottery.sol";
+/*////////////// IMPORTS //////////////*/ import {Lottery} from "./Lottery.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import {LotteryNFT} from "./LotteryNFT.sol";
 
 contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
@@ -14,9 +15,20 @@ contract LotteryFactory is Ownable2Step {
     address private oracle;
     address payable private activeLottery;
     bool private lotteryPending;
+    LotteryNFT private lotteryNFT;
+    uint256 private constant MAX_NFT_ID = 5;
 
     mapping(address => bool) private isLottery;
-    mapping(uint256 => address) private lotteries;
+    mapping(uint256 => LotteryInfo) private lotteries;
+
+    struct LotteryInfo {
+        uint256 id;
+        address lotteryAddress;
+        uint256 fee;
+        uint256 price;
+        address winner;
+        uint256 winningAmount;
+    }
 
     /*//////////////////////////////////////////////
                         ERRORS
@@ -51,12 +63,14 @@ contract LotteryFactory is Ownable2Step {
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor() {}
+    constructor() {
+        lotteryNFT = new LotteryNFT();
+    }
 
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap)
+    function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap, uint256 maxOwners)
         external
         onlyOwner
         returns (address lottery)
@@ -65,12 +79,13 @@ contract LotteryFactory is Ownable2Step {
         require(oracle != address(0), LotteryFactory__OracleNotSet());
         require(cap > 0 && cap <= 5000, LotteryFactory__InvalidCap());
 
-        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(fee, ticketPriceInWei, cap));
+        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(fee, ticketPriceInWei, cap, maxOwners));
         emit LotteryFactory__LotteryCreated(lottery);
-        lotteries[lotteryCount] = lottery;
         isLottery[lottery] = true;
         lotteryCount++;
         lotteryPending = true;
+        LotteryInfo memory info = LotteryInfo(lotteryCount, lottery, fee, ticketPriceInWei, address(0), 0);
+        lotteries[lotteryCount] = info;
         activeLottery = payable(lottery);
     }
 
@@ -78,9 +93,16 @@ contract LotteryFactory is Ownable2Step {
         require(lottery == activeLottery, LotteryFactory__NotLottery());
         require(lotteryWinner != address(0), LotteryFactory__InvalidRecipient());
 
-        Lottery(lottery).endLottery(lotteryWinner);
+        uint256 reward = Lottery(lottery).endLottery(lotteryWinner);
+        if (lotteryCount <= MAX_NFT_ID) {
+            lotteryNFT.mint(lotteryWinner);
+        }
 
-        activeLottery = payable(address(0));
+        LotteryInfo memory info = lotteries[lotteryCount];
+        info.winner = lotteryWinner;
+        info.winningAmount = reward;
+        lotteries[lotteryCount] = info;
+        lotteryPending = false;
     }
 
     function withdrawFees(uint256 amount, address recipient) external onlyOwner {
@@ -117,7 +139,11 @@ contract LotteryFactory is Ownable2Step {
         return lotteryCount;
     }
 
-    function getLotteryWithId(uint256 id) public view returns (address) {
+    function getLotteryWithId(uint256 id) public view returns (LotteryInfo memory) {
         return lotteries[id];
+    }
+
+    function getOracle() public view returns (address) {
+        return oracle;
     }
 }

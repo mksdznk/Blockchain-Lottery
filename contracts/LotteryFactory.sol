@@ -1,11 +1,9 @@
 ///SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-/*////////////// IMPORTS //////////////*/ import {Lottery} from "./Lottery.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Lottery} from "./Lottery.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
-import {LotteryNFT} from "./LotteryNFT.sol";
+import {LotteryNft} from "./LotteryNft.sol";
 
 contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
@@ -15,7 +13,7 @@ contract LotteryFactory is Ownable2Step {
     address private oracle;
     address payable private activeLottery;
     bool private lotteryPending;
-    LotteryNFT private lotteryNFT;
+    LotteryNft private lotteryNft;
     uint256 private constant MAX_NFT_ID = 5;
 
     mapping(address => bool) private isLottery;
@@ -64,7 +62,7 @@ contract LotteryFactory is Ownable2Step {
 
     /*/////////////// CONSTRUCTOR ///////////////*/
     constructor() {
-        lotteryNFT = new LotteryNFT();
+        lotteryNft = new LotteryNft();
     }
 
     /*//////////////////////////////////////////////
@@ -95,7 +93,7 @@ contract LotteryFactory is Ownable2Step {
 
         uint256 reward = Lottery(lottery).endLottery(lotteryWinner);
         if (lotteryCount <= MAX_NFT_ID) {
-            lotteryNFT.mint(lotteryWinner);
+            lotteryNft.mint(lotteryWinner);
         }
 
         LotteryInfo memory info = lotteries[lotteryCount];
@@ -145,5 +143,9 @@ contract LotteryFactory is Ownable2Step {
 
     function getOracle() public view returns (address) {
         return oracle;
+    }
+
+    function getLotteryNftAddress() public view returns (address) {
+        return address(lotteryNft);
     }
 }

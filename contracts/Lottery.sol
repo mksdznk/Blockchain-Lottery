@@ -5,7 +5,6 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {LotteryFactory} from "./LotteryFactory.sol";
-import {LotteryNFT} from "./LotteryNFT.sol";
 
 contract Lottery is ERC20Capped {
     /*///////////////////////////////////////////////

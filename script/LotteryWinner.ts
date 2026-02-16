@@ -1,3 +1,5 @@
+// this is the offchain calculation which runs on chain link to calculate the lottery winner
+
 try {
   const lotteryAddress = args[0];
   let chain;

@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {FunctionsClient} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {FunctionsRequest} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
-import {IFunctionsClient} from "@chainlink/contracts/v0.8/functions/dev/v1_0_0/interfaces/IFunctionsClient.sol";
 import {AutomationCompatibleInterface} from "@chainlink/contracts/v0.8/interfaces/AutomationCompatibleInterface.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/v0.8/dev/vrf/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/v0.8/dev/vrf/libraries/VRFV2PlusClient.sol";
@@ -30,8 +29,8 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     uint64 private immutable i_functionsSubscriptionId;
     address private lotteryFactory;
     uint32 private gasLimit = 300_000;
-    address private router; // = 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0; //// ENTER YOUR ROUTER ADDRESS
-    bytes32 private donID; // = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000; //// ENTER YOUR DON ID
+    address private router; //// ENTER YOUR ROUTER ADDRESS
+    bytes32 private donID; //// ENTER YOUR DON ID
     string private source = "try {const lotteryAddress = args[0];"
         "const ticketPriceInWei = args[1];let chain;if (args[2] == 1) {chain = 'eth';}else if (args[2] == 11155111) {"
         "chain = 'sepolia';}const randomNumber = args[3];let response = await Functions.makeHttpRequest({"

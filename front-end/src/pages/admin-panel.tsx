@@ -12,7 +12,7 @@ import Head from 'next/head';
 import TabLogo from '../images/eth-icon.ico';
 import styles from '../styles/Home.module.css';
 import { useRouter } from 'next/router';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { lotteryFactoryContractConfig } from '../contracts/lotteryFactoryContractConfig';
 import { Button } from '@/components/ui/button';
 import { 
@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { lotteryFunctionsContractConfig } from 'src/contracts/lotteryFunctionsContractConfig';
 
 const AdminPanel: NextPage = () => {
     const { isConnected, address, chainId} = useAccount();
@@ -73,6 +74,8 @@ const AdminPanel: NextPage = () => {
 
     const [ticketsCap, setTicketsCap] = useState(0);
 
+    const [ticketsMaxOwners, setTicketsMaxOwners] = useState(0);
+
     const {data: lotteryHash,isPending: isCreating, writeContract: createLotteryWriteContract} = useWriteContract();
     const {data: oracleHash, isPending: isSetting, writeContract: setOracleWriteContract} = useWriteContract();
     const {data: lotteryEndHash, isPending: isEnding, writeContract: forceEndLotteryWriteContract} = useWriteContract();
@@ -94,13 +97,13 @@ const AdminPanel: NextPage = () => {
       createLotteryWriteContract({
         ...lotteryFactoryContractConfig,
         functionName: 'createLottery',
-        args: [feePercentage, ticketPrice, ticketsCap],
+        args: [feePercentage, ticketPrice, ticketsCap, ticketsMaxOwners],
       })
     }
 
     function forceEndLottery() {
       forceEndLotteryWriteContract({
-        ...lotteryFactoryContractConfig,
+        ...lotteryFunctionsContractConfig,
         functionName: 'forceEndLottery',
         args: [],
       })
@@ -234,7 +237,7 @@ const AdminPanel: NextPage = () => {
             <CardContent>
               <Button 
                 className='w-full' 
-                disabled={activeLottery == 0 || isEnding || lotteryEndConfirming}
+                disabled={activeLottery == 0 || isEnding || lotteryEndConfirming || oracleAddress == 0}
                 onClick={forceEndLottery}>
                   {isEnding || lotteryEndConfirming ? "Ending..." : "End lottery"}
               </Button> 
@@ -251,7 +254,7 @@ const AdminPanel: NextPage = () => {
                 <DialogTrigger asChild>
                   <Button 
                     className='w-full' 
-                    disabled={activeLottery != 0 || isCreating || lotteryCreationConfirming}>
+                    disabled={activeLottery != 0 || isCreating || lotteryCreationConfirming || oracleAddress == 0}>
                       {isCreating || lotteryCreationConfirming ? "Creating..." : "Create lottery"}
                   </Button>
                 </DialogTrigger>
@@ -280,11 +283,19 @@ const AdminPanel: NextPage = () => {
                         min={1} 
                         onChange={(e) => setTicketsCap(Number(e.target.value))} 
                         placeholder='Max number of tickets'/>
+                      <Input 
+                        className='m-1' 
+                        type='number' 
+                        step={1}
+                        min={1} 
+                        onChange={(e) => setTicketsMaxOwners(Number(e.target.value))} 
+                        placeholder='Max number of owners'/>
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button onClick={createLottery}>Create lottery</Button>
+                      <Button  
+                        onClick={createLottery}>Create lottery</Button>
                     </DialogClose>
                   </DialogFooter>
                 </DialogContent>

@@ -17,6 +17,7 @@ import {
   useState 
 } from 'react';
 import { lotteryFactoryContractConfig } from '../contracts/lotteryFactoryContractConfig';
+import { lotteryNftContractConfig } from '../contracts/lotteryNftContractConfig';
 import { Button } from '@/components/ui/button';
 import { 
   Card,
@@ -26,12 +27,10 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
- import { Input } from '@/components/ui/input';
- import EthImage from 'public/images/eth-1.png';
- import GitHubImage from 'public/images/GitHub_Lockup_Black.svg'
- import Image from 'next/image';
-
-
+import { Input } from '@/components/ui/input';
+import NftImage from 'public/images/mystery-nft.png';
+import GitHubImage from 'public/images/GitHub_Lockup_Black.svg'
+import Image from 'next/image';
 //CONDITIONAL STYLING
 import { cn } from '@/lib/utils';
 import { 
@@ -39,7 +38,6 @@ import {
   PopoverTrigger, 
   PopoverContent, 
   PopoverHeader, 
-  PopoverTitle, 
   PopoverDescription 
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
@@ -52,18 +50,20 @@ const Lotteries: NextPage = () => {
 
     type Lottery = {
       id: number;
-      address: string;
+      lotteryAddress: string;
+      fee: number;
+      price: number;
       winner: string;
       winningAmount: number;
-      feePercentage: number;
     }
     
     const pastLotteries: Lottery[] = [{
       id: 1,
-      address: '0x123',
+      lotteryAddress: '0x123',
+      fee: 10,
+      price: 100,
       winner: '0x123',
       winningAmount: 100,
-      feePercentage: 10
     }];
 
     useEffect(() => {
@@ -106,13 +106,16 @@ const Lotteries: NextPage = () => {
       functionName: 'getActiveLottery',
       args: [],
     });
-
     
     const lotteryAddress = activeLottery !== null || activeLottery !== undefined ? String(activeLottery) : null;
     
-    const {data: prizePoolSize,} = useBalance({
-      address: lotteryFactoryContractConfig.address,
+    const {data: prizePoolSize} = useBalance({
+      address: lotteryAddress as `0x{string}`,
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      }
     });
+    console.log(prizePoolSize);
 
     const {data: userTickets} = useBalance({
       address: user,
@@ -173,6 +176,16 @@ const Lotteries: NextPage = () => {
       },
     });
 
+    const { data: maxOwners } = useReadContract({
+      address: lotteryAddress as `0x{string}`,
+      abi: lotteryContractConfig.abi,
+      functionName: 'getMaxOwners',
+      args: [],
+      query: {
+        enabled: activeLottery !== null || activeLottery !== undefined,
+      },
+    });
+
     const {
       data: buyTicketsHash,
       isPending: isBuying,
@@ -212,6 +225,17 @@ const Lotteries: NextPage = () => {
       }
     }
 
+    function getLotteryNFT(id: number) {
+      console.log(id);
+      const { data: lotteryNft } = useReadContract({
+        ...lotteryNftContractConfig,
+        functionName: 'symbol',
+        args: [],//BigInt(id)
+      });
+      console.log('nft: ', lotteryNft);
+      return "";
+    }
+
     useEffect(() => {
       if (isBuyingSuccess) {
         toast.success('Successfully bought ticket/s', {position: 'top-center'});
@@ -222,19 +246,6 @@ const Lotteries: NextPage = () => {
       }
 
     })
-
-    // useEffect(() => {
-    //   if (Number(lotteryCount) !== 0) {
-    //     for (let i = 0; i < Number(lotteryCount); i++) {
-    //       const {data: lotteryData} = useReadContract({
-    //         ...lotteryFactoryContractConfig,
-    //         functionName: 'getLotteryWithId',
-    //         args: [i],
-    //       });
-    //       console.log(lotteryData);
-    //     }
-    //   }
-    // });
 
   return (
     <div className={styles.container}>
@@ -264,6 +275,7 @@ const Lotteries: NextPage = () => {
         </div>
 
         <div className='grid grid-cols-3'>
+          {Number(lotteryCount) > 0 &&
           <Card className='m-4 flex flex-col'>
           <CardHeader>
             <div className='flex'>
@@ -288,16 +300,16 @@ const Lotteries: NextPage = () => {
               <PopoverContent>
                 <PopoverHeader>
                   <PopoverDescription>
-                    Ticket price: {Number(ticketPriceInWei)} Wei
+                    Ticket price: {Number(ticketPriceInWei)} Wei | {Number(ticketPriceInWei) / 10 ** 18} ETH
                   </PopoverDescription>
                   <PopoverDescription>
-                    Prize pool size: {Number(prizePoolSize?.value)} Wei
+                    Prize pool size: {Number(prizePoolSize?.value)} Wei | {Number(prizePoolSize?.formatted)} ETH
                   </PopoverDescription>
                   <PopoverDescription>
                     Tickets left: {Number(ticketsLeft)} / {Number(maxTickets)}
                   </PopoverDescription>
                   <PopoverDescription>
-                    Number of owners: {Number(numberOfOwners)} / {500}
+                    Number of owners: {Number(numberOfOwners)} / {Number(maxOwners)}
                   </PopoverDescription>
                   <PopoverDescription>
                     Fee percentage: { Number(feePercentage) / 100 } %
@@ -308,7 +320,7 @@ const Lotteries: NextPage = () => {
           </CardHeader>
 
             <CardContent>
-              <Image src={EthImage} alt="img" />
+              <Image src={NftImage} alt="img" className="object-center" width={350} height={350} />
             </CardContent>
             <CardFooter className='flex flex-col'>
                   <code> {Number(userTickets?.value) > 0 ? "You have " + Number(userTickets?.value) + " tickets" : ""} </code>
@@ -320,20 +332,25 @@ const Lotteries: NextPage = () => {
                   </Button>
                   <div className='w-full flex flex-row'>
                     <Input 
-                      className='w-1/2'
+                      className='w-1/3'
                       type="number" 
                       step={1} 
                       min={1} 
                       placeholder="Number of tickets" 
                       onChange={(e) => setTicketsToBuy(Number(e.target.value))} />
                     <code className='p-2'>
-                      = {Number(ticketPriceInWei) * ticketsToBuy} Wei
+                      = {Number(ticketPriceInWei) * ticketsToBuy} Wei | {Number(ticketPriceInWei) * ticketsToBuy / 10 ** 18} ETH
                     </code>
                   </div>
                 
             </CardFooter>
           </Card>
-
+          }
+          {Number(lotteryCount) === 0 &&
+          <Card className='m-4 flex flex-col'>
+            <h1 className='text-3xl pl-3 text-red-400'>No active lottery</h1>
+          </Card>
+          }
         </div>
 
         <Separator></Separator>
@@ -343,6 +360,12 @@ const Lotteries: NextPage = () => {
         </h1>        
         <div className='grid grid-flow-row-dense grid-cols-3 grid-rows-3'>
 
+          {Number(lotteryCount) === 0 &&
+          <Card className='m-4 flex flex-col'>
+            <h1 className='text-3xl pl-3 text-red-400'>No past lotteries</h1>
+          </Card>
+          }
+
           {pastLotteries.map((lottery) => (
             <Card className='m-4 flex flex-col'>
             <CardHeader>
@@ -350,22 +373,35 @@ const Lotteries: NextPage = () => {
                 <CardTitle className='mt-1 mr-1'>Lottery id: {lottery.id} </CardTitle>
                 <Badge className='bg-red-400 mt-0'>Ended</Badge>
               </div>
-              <CardTitle className=''>Lottery address: <a href="https://etherscan.io/">{lottery.address} </a></CardTitle>
+              <CardTitle className=''>Lottery address: <a href="https://etherscan.io/">{lottery.lotteryAddress} </a></CardTitle>
               <Popover>
               <PopoverTrigger asChild>
                 <Button className='w-min'variant="outline">More Info</Button>
               </PopoverTrigger>
               <PopoverContent>
                 <PopoverHeader>
-                  <PopoverTitle>Title</PopoverTitle>
-                  <PopoverDescription>Description text here.</PopoverDescription>
+                  <PopoverDescription>
+                    LotteryPrice: {lottery.price} Wei
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Lottery fee: {lottery.fee} %
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    LotteryWinner: {lottery.winner}
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Lottery winner: {lottery.winner}
+                  </PopoverDescription>
+                  <PopoverDescription>
+                    Winning amount: {lottery.winningAmount}
+                  </PopoverDescription>       
                 </PopoverHeader>
               </PopoverContent>
             </Popover>
             </CardHeader>
 
             <CardContent>
-              <Image src={EthImage} alt="img"/>
+              <Image src={getLotteryNFT(lottery.id)} alt="img"/>
             </CardContent>
             <CardFooter className='flex flex-col'>
             </CardFooter>

@@ -100,7 +100,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     ///////////////////////////////////////////////*/
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory) {
-        upkeepNeeded = LotteryFactory(lotteryFactory).getActiveLottery() != address(0);
+        upkeepNeeded = LotteryFactory(lotteryFactory).getLotteryPending();
 
         return (upkeepNeeded, "");
     }

@@ -45,6 +45,7 @@ contract LotteryFactory is Ownable2Step {
                         EVENTS
     //////////////////////////////////////////////*/
     event LotteryFactory__LotteryCreated(address lottery);
+    event LotteryFactory__LotteryClosed(address winner, uint256 reward);
     event LotteryFactory__FeesWithdrawn(address recipient, uint256 amount);
 
     /*//////////////////////////////////////////////
@@ -73,7 +74,7 @@ contract LotteryFactory is Ownable2Step {
         onlyOwner
         returns (address lottery)
     {
-        require(!lotteryPending, LotteryFactory__ActiveLotteryExists());
+        require(activeLottery == address(0), LotteryFactory__ActiveLotteryExists());
         require(oracle != address(0), LotteryFactory__OracleNotSet());
         require(cap > 0 && cap <= 5000, LotteryFactory__InvalidCap());
 
@@ -81,7 +82,6 @@ contract LotteryFactory is Ownable2Step {
         emit LotteryFactory__LotteryCreated(lottery);
         isLottery[lottery] = true;
         lotteryCount++;
-        lotteryPending = true;
         LotteryInfo memory info = LotteryInfo(lotteryCount, lottery, fee, ticketPriceInWei, address(0), 0);
         lotteries[lotteryCount] = info;
         activeLottery = payable(lottery);
@@ -101,6 +101,8 @@ contract LotteryFactory is Ownable2Step {
         info.winningAmount = reward;
         lotteries[lotteryCount] = info;
         lotteryPending = false;
+        activeLottery = payable(address(0));
+        emit LotteryFactory__LotteryClosed(lotteryWinner, reward);
     }
 
     function withdrawFees(uint256 amount, address recipient) external onlyOwner {
@@ -131,6 +133,10 @@ contract LotteryFactory is Ownable2Step {
 
     function getActiveLottery() public view returns (address payable) {
         return activeLottery;
+    }
+
+    function getLotteryPending() public view returns (bool) {
+        return lotteryPending;
     }
 
     function getLotteryCount() public view returns (uint256) {

@@ -64,6 +64,13 @@ contract Lottery is ERC20Capped {
         _;
     }
 
+    modifier setPendingLottery() {
+        _;
+        if (totalSupply() == cap() || numberOfOwners == maxOwners) {
+            LotteryFactory(lotteryFactory).setLotteryPending(true);
+        }
+    }
+
     /*/////////////// CONSTRUCTOR ///////////////*/
     constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap, uint256 _maxOwners)
         ERC20("Lottery Ticket", "LT")
@@ -95,7 +102,13 @@ contract Lottery is ERC20Capped {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function purchaseTickets() external payable lotteryIsOpen manageOwners(address(0), 0, msg.sender) {
+    function purchaseTickets() 
+        external 
+        payable 
+        lotteryIsOpen 
+        manageOwners(address(0), 0, msg.sender) 
+        setPendingLottery 
+    {
         require(msg.value > 0, Lottery__ZeroValue());
         require(msg.value % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
         uint256 tickets = msg.value / ticketPriceInWei;
@@ -104,7 +117,7 @@ contract Lottery is ERC20Capped {
         emit Lottery__TicketsPurchased(msg.sender, tickets);
     }
 
-    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) {
+    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) setPendingLottery {
         _transfer(msg.sender, recipient, amount);
         emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }
@@ -121,8 +134,6 @@ contract Lottery is ERC20Capped {
         require(feeSuccess, Lottery__CallFailed());
 
         lotteryWinner = _lotteryWinner;
-        LotteryFactory(lotteryFactory).setActiveLottery(address(0));
-        LotteryFactory(lotteryFactory).setLotteryPending(false);
         emit Lottery__LotteryClosed(_lotteryWinner, address(this).balance - fee);
     }
 

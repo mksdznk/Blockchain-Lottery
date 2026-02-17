@@ -2,8 +2,8 @@
 import { abi } from "../abis/LotteryFunctions.json";
  
 export const lotteryFunctionsContractConfig = {
-    address: '0x820F2D5CA84648B389e72e1dfcb2B685D34d609E' as const,
+    address: '0x5e9a59C8fd792B47F7919f74902ccc9c3849Fd57' as const,
     abi: abi,
   } as const;
 
-export const lotteryFunctionsAddress = '0x820F2D5CA84648B389e72e1dfcb2B685D34d609E';
+export const lotteryFunctionsAddress = '0x5e9a59C8fd792B47F7919f74902ccc9c3849Fd57';

@@ -2,8 +2,8 @@
 import { abi } from "../abis/LotteryFactory.json";
  
 export const lotteryFactoryContractConfig = {
-    address: '0xB14F44813A853c2a503A56574529ee134B61895A' as const,
+    address: '0xe50ceb603c19b0509c0424bb821041403A843c1C' as const,
     abi: abi,
   } as const;
 
-export const lotteryFactoryAddress = '0xB14F44813A853c2a503A56574529ee134B61895A';
+export const lotteryFactoryAddress = '0xe50ceb603c19b0509c0424bb821041403A843c1C';

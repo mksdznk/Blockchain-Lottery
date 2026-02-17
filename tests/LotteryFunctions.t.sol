@@ -5,7 +5,9 @@ import {Test} from "forge-std/Test.sol";
 import {LotteryFunctions} from "../contracts/LotteryFunctions.sol";
 import {LotteryFactory} from "../contracts/LotteryFactory.sol";
 import {Lottery} from "../contracts/Lottery.sol";
-import {VRFCoordinatorV2PlusMock} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2PlusMock.sol";
+import {
+    VRFCoordinatorV2PlusMock
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/mocks/VRFCoordinatorV2PlusMock.sol";
 
 // /// @notice Mock VRF Coordinator for testing
 // contract MockVRFCoordinator {
@@ -32,11 +34,7 @@ import {VRFCoordinatorV2PlusMock} from "foundry-chainlink-toolkit/lib/chainlink-
 contract MockFunctionsRouter {
     bytes32 private constant MOCK_REQUEST_ID = bytes32(uint256(1));
 
-    function sendRequest(uint64, bytes memory, uint16, uint32, bytes32)
-        external
-        pure
-        returns (bytes32)
-    {
+    function sendRequest(uint64, bytes memory, uint16, uint32, bytes32) external pure returns (bytes32) {
         return MOCK_REQUEST_ID;
     }
 }

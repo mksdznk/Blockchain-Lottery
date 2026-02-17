@@ -102,12 +102,12 @@ contract Lottery is ERC20Capped {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
-    function purchaseTickets() 
-        external 
-        payable 
-        lotteryIsOpen 
-        manageOwners(address(0), 0, msg.sender) 
-        setPendingLottery 
+    function purchaseTickets()
+        external
+        payable
+        lotteryIsOpen
+        manageOwners(address(0), 0, msg.sender)
+        setPendingLottery
     {
         require(msg.value > 0, Lottery__ZeroValue());
         require(msg.value % ticketPriceInWei == 0, Lottery__OnlyWholeTickets(ticketPriceInWei));
@@ -117,7 +117,11 @@ contract Lottery is ERC20Capped {
         emit Lottery__TicketsPurchased(msg.sender, tickets);
     }
 
-    function transferTickets(address recipient, uint256 amount) external manageOwners(msg.sender, amount, recipient) setPendingLottery {
+    function transferTickets(address recipient, uint256 amount)
+        external
+        manageOwners(msg.sender, amount, recipient)
+        setPendingLottery
+    {
         _transfer(msg.sender, recipient, amount);
         emit Lottery__TicketsTransfered(msg.sender, recipient, amount);
     }

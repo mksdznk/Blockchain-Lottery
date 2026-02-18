@@ -51,6 +51,7 @@ contract LotteryFunctionsTest is Test {
 
     uint64 constant FUNCTIONS_SUB_ID = 1;
     uint256 vrfSubId;
+    bytes32 keyHash;
 
     function setUp() public {
         owner = address(this);
@@ -58,6 +59,7 @@ contract LotteryFunctionsTest is Test {
 
         vrfCoordinator = new VRFCoordinatorV2PlusMock(0.1e18, 1e9);
         functionsRouter = new MockFunctionsRouter();
+        keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
 
         vrfSubId = vrfCoordinator.createSubscription();
         vrfCoordinator.fundSubscription(vrfSubId, 0.1e18);
@@ -68,7 +70,8 @@ contract LotteryFunctionsTest is Test {
             FUNCTIONS_SUB_ID,
             vrfSubId,
             address(vrfCoordinator),
-            address(factory)
+            address(factory),
+            keyHash
         );
         vrfCoordinator.addConsumer(vrfSubId, address(lotteryFunctions));
         factory.setOracle(address(lotteryFunctions));
@@ -93,7 +96,8 @@ contract LotteryFunctionsTest is Test {
     }
 
     function test_checkUpkeep_returnsTrueWhenActiveLottery() public {
-        factory.createLottery(500, 0.01 ether, 100, 10);
+        address lotteryAddr = factory.createLottery(500, 0.01 ether, 100, 10);
+        Lottery(payable(lotteryAddr)).purchaseTickets{value: 0.01 ether * 100}();
 
         (bool upkeepNeeded,) = lotteryFunctions.checkUpkeep("");
         assertTrue(upkeepNeeded);

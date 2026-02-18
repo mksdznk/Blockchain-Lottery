@@ -111,9 +111,8 @@ contract LotteryTest is Test {
     }
 
     function test_purchaseTickets_revertsOnZeroValue() public {
-        // With 0 msg.value, balance is 0 < cap, so lotteryIsOpen modifier reverts first
         vm.prank(buyer1);
-        vm.expectRevert(Lottery.Lottery__TicketsLimitReached.selector);
+        vm.expectRevert(Lottery.Lottery__ZeroValue.selector);
         lottery.purchaseTickets{value: 0}();
     }
 

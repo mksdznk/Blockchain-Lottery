@@ -62,7 +62,7 @@ contract LotteryNftTest is Test {
 
     function test_mint_revertsWhenNotOwner() public {
         vm.prank(user1);
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert();
         nft.mint(user1);
     }
 

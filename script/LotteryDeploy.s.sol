@@ -16,6 +16,7 @@ contract LotteryDeploy is Script {
         uint64 functionsSubscriptionId = 6234; // enter subscription ID after creating a subscription
         uint256 vrfSubscriptionId = 22890821576172042770795576892011386820829453116532600925660041482855304707571; // enter subscription ID after creating a subscription
         address vrfCoordinator = 0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B; // enter router address for respective chain
+        bytes32 keyHash = 0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c;
 
         vm.startBroadcast(deployerKey);
         // DEPLOY LOTTERY FACTORY
@@ -24,7 +25,7 @@ contract LotteryDeploy is Script {
 
         // DEPLOY LOTTERY FUNCTIONS
         LotteryFunctions lotteryFunctions = new LotteryFunctions(
-            router, donID, functionsSubscriptionId, vrfSubscriptionId, vrfCoordinator, address(lotteryFactory)
+            router, donID, functionsSubscriptionId, vrfSubscriptionId, vrfCoordinator, address(lotteryFactory), keyHash
         );
 
         console.log("LotteryFactory deployed to:", address(lotteryFactory));

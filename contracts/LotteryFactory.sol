@@ -3,6 +3,7 @@ pragma solidity ^0.8.30;
 
 import {Lottery} from "./Lottery.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {LotteryNft} from "./LotteryNft.sol";
 
 contract LotteryFactory is Ownable2Step {
@@ -62,7 +63,7 @@ contract LotteryFactory is Ownable2Step {
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor() {
+    constructor() Ownable(msg.sender) {
         lotteryNft = new LotteryNft();
     }
 

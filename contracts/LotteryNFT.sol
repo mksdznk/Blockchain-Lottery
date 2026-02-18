@@ -13,7 +13,7 @@ contract LotteryNft is ERC721, Ownable {
     error LotteryNft__MaxSupplyReached();
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor() ERC721("Fifu Fifu", "FIFU2") {}
+    constructor() ERC721("Fifu Fifu", "FIFU2") Ownable(msg.sender) {}
 
     /*//////////// EXTERNAL FUNCTIONS ////////////*/
     function mint(address to) external onlyOwner {

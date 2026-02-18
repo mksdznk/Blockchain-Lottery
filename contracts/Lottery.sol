@@ -3,7 +3,6 @@ pragma solidity ^0.8.30;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {LotteryFactory} from "./LotteryFactory.sol";
 
 contract Lottery is ERC20Capped {
@@ -41,7 +40,7 @@ contract Lottery is ERC20Capped {
                         MODIFIERS
     //////////////////////////////////////////////*/
     modifier lotteryIsOpen() {
-        if (address(this).balance < cap()) revert Lottery__TicketsLimitReached();
+        if (totalSupply() == cap()) revert Lottery__TicketsLimitReached();
         _;
     }
 
@@ -127,7 +126,7 @@ contract Lottery is ERC20Capped {
     }
 
     function endLottery(address _lotteryWinner) external onlyFactory returns (uint256 reward) {
-        uint256 fee = address(this).balance * (10000 / feePercentage);
+        uint256 fee = address(this).balance * (feePercentage / 10000);
 
         reward = address(this).balance - fee;
 

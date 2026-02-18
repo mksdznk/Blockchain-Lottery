@@ -19,9 +19,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     bytes32 private s_lastFunctionsRequestId;
     uint256 private s_lastVRFRequestId;
     bytes private s_lastFunctionsResponse;
-    bytes private s_lastVRFResponse;
     bytes private s_lastFunctionsError;
-    bytes private s_lastVRFError;
     bytes32 private s_keyHash;
     uint256 private lastFunctionsCallTime;
     uint256 private lastVRFCallTime;
@@ -82,7 +80,8 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         uint64 _functionsSubscriptionId,
         uint256 _vrfSubscriptionId,
         address _vrfCoordinator,
-        address _lotteryFactory
+        address _lotteryFactory,
+        bytes32 _keyHash
     )
         FunctionsClient(_router)
         VRFConsumerBaseV2Plus(_vrfCoordinator) /* VRF vrfCoordinator address is address deployed to each network by Chainlink to handle and verify VRF https://docs.chain.link/vrf/v2-5/supported-networks */
@@ -93,6 +92,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         i_functionsSubscriptionId = _functionsSubscriptionId;
         s_vrfSubscriptionId = _vrfSubscriptionId;
         lotteryFactory = _lotteryFactory;
+        s_keyHash = _keyHash;
     }
 
     /*///////////////////////////////////////////////
@@ -163,7 +163,9 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         address lotteryWinner;
 
         if (err.length == 0) {
-            lotteryWinner = abi.decode(response, (address));
+            string memory lotteryWinnerString = abi.decode(response, (string));
+            lotteryWinner = Strings.parseAddress(lotteryWinnerString);
+
             address payable lotteryAddress = LotteryFactory(lotteryFactory).getActiveLottery();
             LotteryFactory(lotteryFactory).endLottery(lotteryAddress, lotteryWinner);
         }
@@ -180,6 +182,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         // Send the request and store the request ID
         s_lastFunctionsRequestId = _sendRequest(req.encodeCBOR(), subscriptionId, gasLimit, donID);
 
+        lastFunctionsCallTime = block.timestamp;
         return s_lastFunctionsRequestId;
     }
 
@@ -207,6 +210,10 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
 
     function getLastVRFCallTime() external view returns (uint256) {
         return lastVRFCallTime;
+    }
+
+    function getLastVRFRequestId() external view returns (uint256) {
+        return s_lastVRFRequestId;
     }
 
     function getLastFunctionsCallTime() external view returns (uint256) {

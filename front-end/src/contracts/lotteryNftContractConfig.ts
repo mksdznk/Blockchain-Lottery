@@ -2,8 +2,8 @@
 import { abi } from "../abis/LotteryNft.json";
  
 export const lotteryNftContractConfig = {
-    address: '0x4358d1f8ABceb2D5e6Dd936D64764538ba1eb489' as const,
+    address: '0x87c3F7Dc892a1bbc7C874b0D1021ca551956Ff70' as const,
     abi: abi,
   } as const;
 
-export const lotteryNftAddress = '0x4358d1f8ABceb2D5e6Dd936D64764538ba1eb489';
+export const lotteryNftAddress = '0x87c3F7Dc892a1bbc7C874b0D1021ca551956Ff70';

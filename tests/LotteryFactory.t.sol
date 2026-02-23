@@ -4,13 +4,14 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 import {Lottery} from "../contracts/Lottery.sol";
 import {LotteryFactory} from "../contracts/LotteryFactory.sol";
+import {LotteryFunctions} from "../contracts/LotteryFunctions.sol";
 import {LotteryNft} from "../contracts/LotteryNft.sol";
 
 contract LotteryFactoryTest is Test {
     LotteryFactory factory;
+    address oracle;
 
     address owner;
-    address oracle = makeAddr("oracle");
     address user1 = makeAddr("user1");
     address user2 = makeAddr("user2");
     address winner = makeAddr("winner");
@@ -23,6 +24,15 @@ contract LotteryFactoryTest is Test {
     function setUp() public {
         owner = address(this);
         factory = new LotteryFactory();
+        oracle = address(new LotteryFunctions(
+            address(1), //MOCK
+            bytes32(uint256(1)), //MOCK
+            uint64(1), //MOCK
+            uint256(1), //MOCK
+            address(2), //MOCK
+            address(factory),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
+        ));
         factory.setOracle(oracle);
     }
 
@@ -60,8 +70,8 @@ contract LotteryFactoryTest is Test {
     function test_createLottery_setsLotteryInfo() public {
         address lotteryAddr = factory.createLottery(FEE, TICKET_PRICE, CAP, MAX_OWNERS);
 
-        LotteryFactory.LotteryInfo memory info = factory.getLotteryWithId(1);
-        assertEq(info.id, 1);
+        LotteryFactory.LotteryInfo memory info = factory.getLotteryWithId(0);
+        assertEq(info.id, 0);
         assertEq(info.lotteryAddress, lotteryAddr);
         assertEq(info.fee, FEE);
         assertEq(info.price, TICKET_PRICE);
@@ -206,12 +216,6 @@ contract LotteryFactoryTest is Test {
         vm.prank(user1);
         vm.expectRevert(LotteryFactory.LotteryFactory__NotLottery.selector);
         factory.setActiveLottery(address(0));
-    }
-
-    function test_setLotteryPending_revertsWhenNotLottery() public {
-        vm.prank(user1);
-        vm.expectRevert(LotteryFactory.LotteryFactory__NotLottery.selector);
-        factory.setLotteryPending(false);
     }
 
     /*//////////////////////////////////////////////

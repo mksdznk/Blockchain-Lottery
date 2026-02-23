@@ -72,7 +72,7 @@ contract LotteryNftTest is Test {
 
     function test_tokenURI_returnsCorrectURI() public {
         nft.mint(user1);
-        string memory expectedBase = "ipfs://bafybeifatqoahypgwbg2oyv5gj7nwd6b7weqc7b3wqtpajscg5l7inpium/";
+        string memory expectedBase = "ipfs://bafybeieiqrnwhc5xbuc6caemc5uvtqi2s56fe3i7o4kamxdbac2sd74s3i/";
         assertEq(nft.tokenURI(0), string(abi.encodePacked(expectedBase, "0")));
     }
 

@@ -4,13 +4,14 @@ pragma solidity ^0.8.30;
 import {Test} from "forge-std/Test.sol";
 import {Lottery} from "../contracts/Lottery.sol";
 import {LotteryFactory} from "../contracts/LotteryFactory.sol";
+import {LotteryFunctions} from "../contracts/LotteryFunctions.sol";
 
 contract LotteryTest is Test {
     LotteryFactory factory;
     Lottery lottery;
 
     address owner;
-    address oracle = makeAddr("oracle");
+    address oracle;
     address buyer1 = makeAddr("buyer1");
     address buyer2 = makeAddr("buyer2");
     address buyer3 = makeAddr("buyer3");
@@ -18,11 +19,20 @@ contract LotteryTest is Test {
     uint256 constant FEE = 500; // basis points
     uint256 constant TICKET_PRICE = 0.01 ether;
     uint256 constant CAP = 100; // max tickets
-    uint256 constant MAX_OWNERS = 10;
+    uint256 constant MAX_OWNERS = 2;
 
     function setUp() public {
         owner = address(this);
         factory = new LotteryFactory();
+        oracle = address(new LotteryFunctions(
+            address(1), //MOCK
+            bytes32(uint256(1)), //MOCK
+            uint64(1), //MOCK
+            uint256(1), //MOCK
+            address(2), //MOCK
+            address(factory),
+            bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
+        ));
         factory.setOracle(oracle);
 
         address lotteryAddr = factory.createLottery(FEE, TICKET_PRICE, CAP, MAX_OWNERS);
@@ -134,22 +144,17 @@ contract LotteryTest is Test {
     }
 
     function test_purchaseTickets_revertsWhenTooManyOwners() public {
-        // Use a separate factory to avoid ActiveLotteryExists error
-        LotteryFactory factory2 = new LotteryFactory();
-        factory2.setOracle(oracle);
-        address smallLotteryAddr = factory2.createLottery(FEE, TICKET_PRICE, CAP, 2);
-        Lottery smallLottery = Lottery(payable(smallLotteryAddr));
-
         vm.prank(buyer1);
-        smallLottery.purchaseTickets{value: TICKET_PRICE}();
-
+        lottery.purchaseTickets{value: TICKET_PRICE}();
+ 
         vm.prank(buyer2);
-        smallLottery.purchaseTickets{value: TICKET_PRICE}();
+        lottery.purchaseTickets{value: TICKET_PRICE}();
+ 
 
         // Third buyer should fail
         vm.prank(buyer3);
         vm.expectRevert(Lottery.Lottery__TooManyOwners.selector);
-        smallLottery.purchaseTickets{value: TICKET_PRICE}();
+        lottery.purchaseTickets{value: TICKET_PRICE}();
     }
 
     /*//////////////////////////////////////////////
@@ -200,19 +205,17 @@ contract LotteryTest is Test {
     }
 
     function test_transferTickets_revertsWhenTooManyOwners() public {
-        // Use a separate factory to avoid ActiveLotteryExists error
-        LotteryFactory factory2 = new LotteryFactory();
-        factory2.setOracle(oracle);
-        address tinyLotteryAddr = factory2.createLottery(FEE, TICKET_PRICE, CAP, 1);
-        Lottery tinyLottery = Lottery(payable(tinyLotteryAddr));
-
         vm.prank(buyer1);
-        tinyLottery.purchaseTickets{value: 0.05 ether}();
+        lottery.purchaseTickets{value: TICKET_PRICE}();
+ 
+        vm.startPrank(buyer2);
+            lottery.purchaseTickets{value: TICKET_PRICE}();
+            lottery.purchaseTickets{value: TICKET_PRICE}();
 
-        // Partial transfer to new owner should fail (would make 2 owners)
-        vm.prank(buyer1);
-        vm.expectRevert(Lottery.Lottery__TooManyOwners.selector);
-        tinyLottery.transferTickets(buyer2, 1);
+            // Partial transfer to new owner should fail (would make 2 owners)
+            vm.expectRevert(Lottery.Lottery__TooManyOwners.selector);
+            lottery.transferTickets(buyer3, 1);
+        vm.stopPrank();
     }
 
     /*//////////////////////////////////////////////

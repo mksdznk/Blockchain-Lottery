@@ -96,14 +96,16 @@ contract LotteryFactory is Ownable2Step {
         require(lotteryWinner != address(0), LotteryFactory__InvalidRecipient());
 
         uint256 reward = Lottery(lottery).endLottery(lotteryWinner);
-        if (lotteryCount <= MAX_NFT_ID) {
+        // 1 is added as lottery count here is 1 greater than current lottery id
+        if (lotteryCount <= MAX_NFT_ID + 1) { 
             lotteryNft.mint(lotteryWinner);
         }
 
-        LotteryInfo memory info = lotteries[lotteryCount];
+        LotteryInfo memory info = lotteries[lotteryCount - 1];
         info.winner = lotteryWinner;
         info.winningAmount = reward;
-        lotteries[lotteryCount] = info;
+        // overwrite with updated info, subtracted by 1 because lotteryCount is 1 greater than current lottery id
+        lotteries[lotteryCount - 1] = info; 
         activeLottery = payable(address(0));
         emit LotteryFactory__LotteryClosed(lotteryWinner, reward);
     }

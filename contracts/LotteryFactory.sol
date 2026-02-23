@@ -5,6 +5,7 @@ import {Lottery} from "./Lottery.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {LotteryNft} from "./LotteryNft.sol";
+import {LotteryFunctions} from "./LotteryFunctions.sol";    
 
 contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
@@ -13,7 +14,6 @@ contract LotteryFactory is Ownable2Step {
     uint256 private lotteryCount;
     address private oracle;
     address payable private activeLottery;
-    bool private lotteryPending;
     LotteryNft private lotteryNft;
     uint256 private constant MAX_NFT_ID = 5;
 
@@ -70,6 +70,8 @@ contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
+    receive() external payable {}
+
     function createLottery(uint256 fee, uint256 ticketPriceInWei, uint256 cap, uint256 maxOwners)
         external
         onlyOwner
@@ -79,12 +81,13 @@ contract LotteryFactory is Ownable2Step {
         require(oracle != address(0), LotteryFactory__OracleNotSet());
         require(cap > 0 && cap <= 5000, LotteryFactory__InvalidCap());
 
-        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(fee, ticketPriceInWei, cap, maxOwners));
+        lottery = address(new Lottery{salt: bytes32(lotteryCount)}(fee, ticketPriceInWei, cap, maxOwners, oracle));
         emit LotteryFactory__LotteryCreated(lottery);
         isLottery[lottery] = true;
-        lotteryCount++;
+        LotteryFunctions(oracle).setIsLottery(lottery);
         LotteryInfo memory info = LotteryInfo(lotteryCount, lottery, fee, ticketPriceInWei, address(0), 0);
         lotteries[lotteryCount] = info;
+        lotteryCount++;
         activeLottery = payable(lottery);
     }
 
@@ -101,7 +104,6 @@ contract LotteryFactory is Ownable2Step {
         info.winner = lotteryWinner;
         info.winningAmount = reward;
         lotteries[lotteryCount] = info;
-        lotteryPending = false;
         activeLottery = payable(address(0));
         emit LotteryFactory__LotteryClosed(lotteryWinner, reward);
     }
@@ -124,20 +126,12 @@ contract LotteryFactory is Ownable2Step {
         activeLottery = payable(lottery);
     }
 
-    function setLotteryPending(bool _lotteryPending) external onlyLottery {
-        lotteryPending = _lotteryPending;
-    }
-
     /*//////////////////////////////////////////////
                     VIEW FUNCTIONS
     //////////////////////////////////////////////*/
 
     function getActiveLottery() public view returns (address payable) {
         return activeLottery;
-    }
-
-    function getLotteryPending() public view returns (bool) {
-        return lotteryPending;
     }
 
     function getLotteryCount() public view returns (uint256) {

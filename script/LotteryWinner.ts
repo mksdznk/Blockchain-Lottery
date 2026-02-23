@@ -75,9 +75,5 @@ try {
     return Functions.encodeString(lotteryAddresses[winnerIndex]);
 
 } catch (error) {
-  console.error('Error:', error);
-  return Functions.encodeString(JSON.stringify({
-    success: false,
-    error: error.message
-  }));
+  throw Error(error.message);
 }

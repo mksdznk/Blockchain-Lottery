@@ -4,6 +4,7 @@ pragma solidity ^0.8.30;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 import {LotteryFactory} from "./LotteryFactory.sol";
+import {LotteryFunctions} from "./LotteryFunctions.sol";
 
 contract Lottery is ERC20Capped {
     /*///////////////////////////////////////////////
@@ -15,6 +16,8 @@ contract Lottery is ERC20Capped {
     uint256 private maxOwners;
     uint256 private numberOfOwners; // to keep track of limited number of owners
     address private lotteryWinner;
+    address private lotteryFunctions;
+    bool private lotteryClosed;
 
     /*//////////////////////////////////////////////
                         ERRORS
@@ -40,7 +43,7 @@ contract Lottery is ERC20Capped {
                         MODIFIERS
     //////////////////////////////////////////////*/
     modifier lotteryIsOpen() {
-        if (totalSupply() == cap()) revert Lottery__TicketsLimitReached();
+        if (lotteryClosed) revert Lottery__NotOpen();
         _;
     }
 
@@ -66,12 +69,12 @@ contract Lottery is ERC20Capped {
     modifier setPendingLottery() {
         _;
         if (totalSupply() == cap() || numberOfOwners == maxOwners) {
-            LotteryFactory(lotteryFactory).setLotteryPending(true);
+            LotteryFunctions(lotteryFunctions).setLotteryPending(true);
         }
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap, uint256 _maxOwners)
+    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap, uint256 _maxOwners, address _lotteryFunctions)
         ERC20("Lottery Ticket", "LT")
         ERC20Capped(_cap)
     {
@@ -79,6 +82,7 @@ contract Lottery is ERC20Capped {
         ticketPriceInWei = _ticketPriceInWei;
         lotteryFactory = msg.sender;
         maxOwners = _maxOwners;
+        lotteryFunctions = _lotteryFunctions;
     }
 
     /*//////////////////////////////////////////////
@@ -96,11 +100,11 @@ contract Lottery is ERC20Capped {
         return 0;
     }
 
-    receive() external payable {}
-
     /*//////////////////////////////////////////////
                     EXTERNAL FUNCTIONS
     //////////////////////////////////////////////*/
+    receive() external payable {}
+
     function purchaseTickets()
         external
         payable
@@ -126,7 +130,7 @@ contract Lottery is ERC20Capped {
     }
 
     function endLottery(address _lotteryWinner) external onlyFactory returns (uint256 reward) {
-        uint256 fee = address(this).balance * (feePercentage / 10000);
+        uint256 fee = address(this).balance * feePercentage / 10000;
 
         reward = address(this).balance - fee;
 
@@ -137,7 +141,8 @@ contract Lottery is ERC20Capped {
         require(feeSuccess, Lottery__CallFailed());
 
         lotteryWinner = _lotteryWinner;
-        emit Lottery__LotteryClosed(_lotteryWinner, address(this).balance - fee);
+        lotteryClosed = true;
+        emit Lottery__LotteryClosed(_lotteryWinner, reward);
     }
 
     /*//////////////////////////////////////////////

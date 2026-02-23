@@ -25,6 +25,6 @@ contract LotteryNft is ERC721, Ownable {
 
     /*//////////// INTERNAL FUNCTIONS ////////////*/
     function _baseURI() internal view override returns (string memory) {
-        return "ipfs://bafybeifatqoahypgwbg2oyv5gj7nwd6b7weqc7b3wqtpajscg5l7inpium/";
+        return "ipfs://bafybeieiqrnwhc5xbuc6caemc5uvtqi2s56fe3i7o4kamxdbac2sd74s3i/";
     }
 }

@@ -5,11 +5,21 @@ import {Test} from "forge-std/Test.sol";
 import {LotteryFunctions} from "../contracts/LotteryFunctions.sol";
 import {LotteryFactory} from "../contracts/LotteryFactory.sol";
 import {Lottery} from "../contracts/Lottery.sol";
-import { VRFCoordinatorV2Interface } from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import { VRFConsumerBaseV2Plus } from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/vrf/VRFConsumerBaseV2Plus.sol";
-import { ConfirmedOwner } from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
-import { IVRFCoordinatorV2Plus } from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/interfaces/IVRFCoordinatorV2Plus.sol";
-import { VRFV2PlusClient } from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/vrf/libraries/VRFV2PlusClient.sol";
+import {
+    VRFCoordinatorV2Interface
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import {
+    VRFConsumerBaseV2Plus
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/vrf/VRFConsumerBaseV2Plus.sol";
+import {
+    ConfirmedOwner
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
+import {
+    IVRFCoordinatorV2Plus
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/interfaces/IVRFCoordinatorV2Plus.sol";
+import {
+    VRFV2PlusClient
+} from "foundry-chainlink-toolkit/lib/chainlink-brownie-contracts/contracts/src/v0.8/dev/vrf/libraries/VRFV2PlusClient.sol";
 
 // solhint-disable chainlink-solidity/prefix-immutable-variables-with-i
 // solhint-disable gas-custom-errors
@@ -55,6 +65,7 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
     uint256 internal s_currentSubId;
     uint256 internal s_nextRequestId = 1;
     uint256 internal s_nextPreSeed = 100;
+
     struct Subscription {
         address owner;
         uint96 nativeBalance;
@@ -80,7 +91,7 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
      * @notice Sets the configuration of the vrfv2 mock coordinator
      */
     function setConfig() public onlyOwner {
-        s_config = Config({ reentrancyLock: false });
+        s_config = Config({reentrancyLock: false});
         emit ConfigSet();
     }
 
@@ -142,7 +153,7 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
         VRFConsumerBaseV2Plus v;
         bytes memory callReq = abi.encodeWithSelector(v.rawFulfillRandomWords.selector, _requestId, _words);
         s_config.reentrancyLock = true;
-        (bool success, ) = _consumer.call{ gas: req.callbackGasLimit }(callReq);
+        (bool success,) = _consumer.call{gas: req.callbackGasLimit}(callReq);
         s_config.reentrancyLock = false;
 
         uint96 payment = uint96(BASE_FEE + ((startGas - gasleft()) * GAS_PRICE_LINK));
@@ -178,9 +189,13 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
         emit SubscriptionFundedWithNative(_subId, oldNativeBalance, oldNativeBalance + msg.value);
     }
 
-    function requestRandomWords(
-        VRFV2PlusClient.RandomWordsRequest calldata req
-    ) external override nonReentrant onlyValidConsumer(req.subId, msg.sender) returns (uint256) {
+    function requestRandomWords(VRFV2PlusClient.RandomWordsRequest calldata req)
+        external
+        override
+        nonReentrant
+        onlyValidConsumer(req.subId, msg.sender)
+        returns (uint256)
+    {
         if (s_subscriptions[req.subId].owner == address(0)) {
             revert InvalidSubscription();
         }
@@ -188,11 +203,8 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
         uint256 requestId = s_nextRequestId++;
         uint256 preSeed = s_nextPreSeed++;
 
-        s_requests[requestId] = Request({
-            subId: req.subId,
-            callbackGasLimit: req.callbackGasLimit,
-            numWords: req.numWords
-        });
+        s_requests[requestId] =
+            Request({subId: req.subId, callbackGasLimit: req.callbackGasLimit, numWords: req.numWords});
 
         emit RandomWordsRequested(
             req.keyHash,
@@ -209,14 +221,12 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
 
     function createSubscription() external override returns (uint256) {
         s_currentSubId++;
-        s_subscriptions[s_currentSubId] = Subscription({ owner: msg.sender, balance: 0, nativeBalance: 0 });
+        s_subscriptions[s_currentSubId] = Subscription({owner: msg.sender, balance: 0, nativeBalance: 0});
         emit SubscriptionCreated(s_currentSubId, msg.sender);
         return s_currentSubId;
     }
 
-    function getSubscription(
-        uint256 subId
-    )
+    function getSubscription(uint256 subId)
         external
         view
         override
@@ -267,10 +277,13 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
         emit ConsumerAdded(subId, consumer);
     }
 
-    function removeConsumer(
-        uint256 _subId,
-        address _consumer
-    ) external override onlySubOwner(_subId) onlyValidConsumer(_subId, _consumer) nonReentrant {
+    function removeConsumer(uint256 _subId, address _consumer)
+        external
+        override
+        onlySubOwner(_subId)
+        onlyValidConsumer(_subId, _consumer)
+        nonReentrant
+    {
         address[] storage consumers = s_consumers[_subId];
         for (uint256 i = 0; i < consumers.length; i++) {
             if (consumers[i] == _consumer) {
@@ -336,22 +349,49 @@ contract VRFCoordinatorV2PlusMock is ConfirmedOwner, IVRFCoordinatorV2Plus {
         return 4000000000000000; // 0.004 Ether
     }
 
-    function requestSubscriptionOwnerTransfer(uint256 /*_subId*/, address /*_newOwner*/) external pure override {
+    function requestSubscriptionOwnerTransfer(
+        uint256,
+        /*_subId*/
+        address /*_newOwner*/
+    )
+        external
+        pure
+        override
+    {
         revert("not implemented");
     }
 
-    function acceptSubscriptionOwnerTransfer(uint256 /*_subId*/) external pure override {
+    function acceptSubscriptionOwnerTransfer(
+        uint256 /*_subId*/
+    )
+        external
+        pure
+        override
+    {
         revert("not implemented");
     }
 
-    function pendingRequestExists(uint256 /*subId*/) public pure override returns (bool) {
+    function pendingRequestExists(
+        uint256 /*subId*/
+    )
+        public
+        pure
+        override
+        returns (bool)
+    {
         revert("not implemented");
     }
 
     function getActiveSubscriptionIds(
-        uint256 /* startIndex */,
+        uint256,
+        /* startIndex */
         uint256 /* maxCount */
-    ) external pure override returns (uint256[] memory) {
+    )
+        external
+        pure
+        override
+        returns (uint256[] memory)
+    {
         revert("not implemented");
     }
 }

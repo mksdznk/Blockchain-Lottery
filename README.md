@@ -6,23 +6,23 @@ The project is a lottery which runs on the ETH blockchain using smart contracts.
 
 Project setup: (execute commands in terminal from root)
 
-1. # Create env variables 
+1. ### Create env variables 
 copy ```.env.sample``` and create ```.env``` and populate with respective keys
 
-2. # Install Foundry dependencies
+2. ### Install Foundry dependencies
 ```forge install```
 
-3. # Build contracts
+3. ### Build contracts
 ```forge build```
 
-4. # Run tests
+4. ### Run tests
 ```forge test```
 
-5. # (optional) Deploy contract to have your own instance to keep track of
+5. ### (optional) Deploy contract to have your own instance to keep track of
 ```forge script script/LotteryDeploy.s.sol --rpc-url <RPC_URL> --broadcast --verify```
  - Additonally fix contract configs in ```front-end/src/contracts/``` and change addresses to newly deployed ones
 
-6. # FE setup
+6. ### FE setup
 ```cd front-end```
 ```yarn install   # or npm install```
 ```yarn dev       # starts on localhost:3000```

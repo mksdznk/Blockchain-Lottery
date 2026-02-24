@@ -74,10 +74,13 @@ contract Lottery is ERC20Capped {
     }
 
     /*/////////////// CONSTRUCTOR ///////////////*/
-    constructor(uint256 _feePercentage, uint256 _ticketPriceInWei, uint256 _cap, uint256 _maxOwners, address _lotteryFunctions)
-        ERC20("Lottery Ticket", "LT")
-        ERC20Capped(_cap)
-    {
+    constructor(
+        uint256 _feePercentage,
+        uint256 _ticketPriceInWei,
+        uint256 _cap,
+        uint256 _maxOwners,
+        address _lotteryFunctions
+    ) ERC20("Lottery Ticket", "LT") ERC20Capped(_cap) {
         feePercentage = _feePercentage;
         ticketPriceInWei = _ticketPriceInWei;
         lotteryFactory = msg.sender;

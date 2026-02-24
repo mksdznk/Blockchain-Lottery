@@ -50,8 +50,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         "entriesForAddress = lotteryEntries[i].balance;for (let j = 0; j < entriesForAddress; j++) {"
         "lotteryAddresses.push(lotteryEntries[i].owner_address);}}}if (response.error) {"
         "throw new Error(`API error: ${response.error}`);}const winnerIndex = randomNumber % lotteryAddresses.length;"
-        "return Functions.encodeString(lotteryAddresses[winnerIndex]);} catch (error) {"
-        "throw Error(error.message);}";
+        "return Functions.encodeString(lotteryAddresses[winnerIndex]);} catch (error) {" "throw Error(error.message);}";
 
     struct VrfRequestStatus {
         bool fulfilled;
@@ -111,6 +110,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     )
         FunctionsClient(_router)
         VRFConsumerBaseV2Plus(_vrfCoordinator) /* VRF vrfCoordinator address is address deployed to each network by Chainlink to handle and verify VRF https://docs.chain.link/vrf/v2-5/supported-networks */
+
     {
         router = _router;
         donID = _donID;
@@ -130,7 +130,10 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     }
 
     function performUpkeep(bytes calldata) external override {
-        require((s_vrfFulfilled || s_lotteryPending || s_winnerRequestFulfilled) && !s_vrfRequestPending,  LotteryFunctions__UpkeepNotNeeded());
+        require(
+            (s_vrfFulfilled || s_lotteryPending || s_winnerRequestFulfilled) && !s_vrfRequestPending,
+            LotteryFunctions__UpkeepNotNeeded()
+        );
         if (s_vrfFulfilled && !s_vrfRequestPending) {
             // Phase 2: VRF is done, now trigger Chainlink Functions
             s_lotteryPending = false;
@@ -147,8 +150,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         } else if (s_winnerRequestFulfilled) {
             // Phase 3: Lottery is ended and winner has been paid
             _endLottery();
-        }
-        else {
+        } else {
             // Phase 1: Lottery pending, request VRF random number
             if (LotteryFactory(lotteryFactory).getActiveLottery() == address(0)) {
                 revert LotteryFunctions__LotteryNotValid();
@@ -166,7 +168,10 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     }
 
     function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
-        require(s_vrfRequests[requestId].exists && !s_vrfRequests[requestId].fulfilled, LotteryFunctions__UnexpectedRequestID(bytes32(0), requestId));
+        require(
+            s_vrfRequests[requestId].exists && !s_vrfRequests[requestId].fulfilled,
+            LotteryFunctions__UnexpectedRequestID(bytes32(0), requestId)
+        );
 
         s_vrfRequests[requestId].fulfilled = true;
         s_pendingRandomWord = randomWords[0];
@@ -192,8 +197,7 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
         } else if (s_winnerRequestFulfilled) {
             // Phase 3: Lottery is ended and winner has been paid
             _endLottery();
-        }
-        else {
+        } else {
             // Phase 1: Lottery pending, request VRF random number
             if (LotteryFactory(lotteryFactory).getActiveLottery() == address(0)) {
                 revert LotteryFunctions__LotteryNotValid();
@@ -221,7 +225,10 @@ contract LotteryFunctions is FunctionsClient, AutomationCompatibleInterface, VRF
     ///////////////////////////////////////////////*/
 
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        require(s_functionsRequests[requestId].exists && !s_functionsRequests[requestId].fulfilled, LotteryFunctions__UnexpectedRequestID(requestId, 0));
+        require(
+            s_functionsRequests[requestId].exists && !s_functionsRequests[requestId].fulfilled,
+            LotteryFunctions__UnexpectedRequestID(requestId, 0)
+        );
 
         string memory lotteryWinnerString;
 

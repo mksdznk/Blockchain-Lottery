@@ -24,15 +24,17 @@ contract LotteryFactoryTest is Test {
     function setUp() public {
         owner = address(this);
         factory = new LotteryFactory();
-        oracle = address(new LotteryFunctions(
-            address(1), //MOCK
-            bytes32(uint256(1)), //MOCK
-            uint64(1), //MOCK
-            uint256(1), //MOCK
-            address(2), //MOCK
-            address(factory),
-            bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
-        ));
+        oracle = address(
+            new LotteryFunctions(
+                address(1), //MOCK
+                bytes32(uint256(1)), //MOCK
+                uint64(1), //MOCK
+                uint256(1), //MOCK
+                address(2), //MOCK
+                address(factory),
+                bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
+            )
+        );
         factory.setOracle(oracle);
     }
 

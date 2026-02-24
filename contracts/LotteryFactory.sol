@@ -5,7 +5,7 @@ import {Lottery} from "./Lottery.sol";
 import {Ownable2Step} from "@openzeppelin/contracts/access/Ownable2Step.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {LotteryNft} from "./LotteryNft.sol";
-import {LotteryFunctions} from "./LotteryFunctions.sol";    
+import {LotteryFunctions} from "./LotteryFunctions.sol";
 
 contract LotteryFactory is Ownable2Step {
     /*//////////////////////////////////////////////
@@ -97,7 +97,7 @@ contract LotteryFactory is Ownable2Step {
 
         uint256 reward = Lottery(lottery).endLottery(lotteryWinner);
         // 1 is added as lottery count here is 1 greater than current lottery id
-        if (lotteryCount <= MAX_NFT_ID + 1) { 
+        if (lotteryCount <= MAX_NFT_ID + 1) {
             lotteryNft.mint(lotteryWinner);
         }
 
@@ -105,7 +105,7 @@ contract LotteryFactory is Ownable2Step {
         info.winner = lotteryWinner;
         info.winningAmount = reward;
         // overwrite with updated info, subtracted by 1 because lotteryCount is 1 greater than current lottery id
-        lotteries[lotteryCount - 1] = info; 
+        lotteries[lotteryCount - 1] = info;
         activeLottery = payable(address(0));
         emit LotteryFactory__LotteryClosed(lotteryWinner, reward);
     }

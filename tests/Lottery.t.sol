@@ -24,15 +24,17 @@ contract LotteryTest is Test {
     function setUp() public {
         owner = address(this);
         factory = new LotteryFactory();
-        oracle = address(new LotteryFunctions(
-            address(1), //MOCK
-            bytes32(uint256(1)), //MOCK
-            uint64(1), //MOCK
-            uint256(1), //MOCK
-            address(2), //MOCK
-            address(factory),
-            bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
-        ));
+        oracle = address(
+            new LotteryFunctions(
+                address(1), //MOCK
+                bytes32(uint256(1)), //MOCK
+                uint64(1), //MOCK
+                uint256(1), //MOCK
+                address(2), //MOCK
+                address(factory),
+                bytes32(0x0000000000000000000000000000000000000000000000000000000000000002) //MOCK
+            )
+        );
         factory.setOracle(oracle);
 
         address lotteryAddr = factory.createLottery(FEE, TICKET_PRICE, CAP, MAX_OWNERS);
@@ -146,10 +148,9 @@ contract LotteryTest is Test {
     function test_purchaseTickets_revertsWhenTooManyOwners() public {
         vm.prank(buyer1);
         lottery.purchaseTickets{value: TICKET_PRICE}();
- 
+
         vm.prank(buyer2);
         lottery.purchaseTickets{value: TICKET_PRICE}();
- 
 
         // Third buyer should fail
         vm.prank(buyer3);
@@ -207,14 +208,14 @@ contract LotteryTest is Test {
     function test_transferTickets_revertsWhenTooManyOwners() public {
         vm.prank(buyer1);
         lottery.purchaseTickets{value: TICKET_PRICE}();
- 
-        vm.startPrank(buyer2);
-            lottery.purchaseTickets{value: TICKET_PRICE}();
-            lottery.purchaseTickets{value: TICKET_PRICE}();
 
-            // Partial transfer to new owner should fail (would make 2 owners)
-            vm.expectRevert(Lottery.Lottery__TooManyOwners.selector);
-            lottery.transferTickets(buyer3, 1);
+        vm.startPrank(buyer2);
+        lottery.purchaseTickets{value: TICKET_PRICE}();
+        lottery.purchaseTickets{value: TICKET_PRICE}();
+
+        // Partial transfer to new owner should fail (would make 2 owners)
+        vm.expectRevert(Lottery.Lottery__TooManyOwners.selector);
+        lottery.transferTickets(buyer3, 1);
         vm.stopPrank();
     }
 

@@ -19,27 +19,26 @@ contract LotteryDeploy is Script {
         bytes32 keyHash = 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae; // enter keyHash for VRF
 
         vm.startBroadcast(deployerKey);
-            // DEPLOY LOTTERY FACTORY
-            console.log("Account: ", deployerAddress);
-            LotteryFactory lotteryFactory = new LotteryFactory();
+        // DEPLOY LOTTERY FACTORY
+        console.log("Account: ", deployerAddress);
+        LotteryFactory lotteryFactory = new LotteryFactory();
 
-            // DEPLOY LOTTERY FUNCTIONS
-            LotteryFunctions lotteryFunctions = new LotteryFunctions(
-                router, donID, functionsSubscriptionId, vrfSubscriptionId, vrfCoordinator, address(lotteryFactory), keyHash
-            );
+        // DEPLOY LOTTERY FUNCTIONS
+        LotteryFunctions lotteryFunctions = new LotteryFunctions(
+            router, donID, functionsSubscriptionId, vrfSubscriptionId, vrfCoordinator, address(lotteryFactory), keyHash
+        );
 
-            lotteryFactory.setOracle(address(lotteryFunctions));
+        lotteryFactory.setOracle(address(lotteryFunctions));
 
-            address payable lottery = payable(lotteryFactory.createLottery(1000, 1e13, 75, 10));
-            Lottery(lottery).purchaseTickets{value: 1e13 * 65}(); // bought 65 tickets
-            Lottery(lottery).transferTickets(0x86a74cCA6e7a16bA5C68bEE001B2F6C5b4023593, 15);
-            Lottery(lottery).transferTickets(0xAc82F54C2d27C3AEF6637f75d5ABF78b417Ea37f, 15);
-            Lottery(lottery).transferTickets(0x3B0E2eFA9F8a75f8A986B0ca2E43DDE77eE0a5AC, 15);
+        address payable lottery = payable(lotteryFactory.createLottery(1000, 1e13, 75, 10));
+        Lottery(lottery).purchaseTickets{value: 1e13 * 65}(); // bought 65 tickets
+        Lottery(lottery).transferTickets(0x86a74cCA6e7a16bA5C68bEE001B2F6C5b4023593, 15);
+        Lottery(lottery).transferTickets(0xAc82F54C2d27C3AEF6637f75d5ABF78b417Ea37f, 15);
+        Lottery(lottery).transferTickets(0x3B0E2eFA9F8a75f8A986B0ca2E43DDE77eE0a5AC, 15);
 
-
-            console.log("LotteryFactory deployed to:", address(lotteryFactory));
-            console.log("LotteryFunctions deployed to:", address(lotteryFunctions));
-            console.log("LotteryNft deployed to:", lotteryFactory.getLotteryNftAddress());
+        console.log("LotteryFactory deployed to:", address(lotteryFactory));
+        console.log("LotteryFunctions deployed to:", address(lotteryFunctions));
+        console.log("LotteryNft deployed to:", lotteryFactory.getLotteryNftAddress());
 
         vm.stopBroadcast();
     }

@@ -118,14 +118,18 @@ const AdminPanel: NextPage = () => {
 
     const [newOracleAddress, setNewOracleAddress] = useState('');
 
-    function copyLotteryAddress() {
-      navigator.clipboard.writeText(String(activeLottery));
+    function copyAddress(address: string) {
+      navigator.clipboard.writeText(address);
       toast.success("Address copied to clipboard", {position: 'top-center'});
     }
 
-    function copyOracleAddress() {
-      navigator.clipboard.writeText(String(activeLottery));
-      toast.success("Address copied to clipboard", {position: 'top-center'});
+    function addressEtherscanLink(address: string) {
+      if (chainId === 1) {
+        return `https://etherscan.io/address/${address}`
+      }
+      else if (chainId === 11155111) {
+        return `https://sepolia.etherscan.io/address/${address}`
+      }
     }
 
     useEffect(() => {
@@ -196,13 +200,13 @@ const AdminPanel: NextPage = () => {
           <Card className='m-4 flex flex-col'>
             <CardHeader>
               <CardTitle>Current oracle address: </CardTitle>
-              <code>
+              <code className="hover:underline">
                 {
                   oracleAddress == 0 ? 
                   "No oracle set" :  
                   String(oracleAddress).slice(0, 6) + "..." + String(oracleAddress).slice(36)
                 } 
-                <Button className={cn(oracleAddress == 0 ? "hidden" : "h-6 w-12 m-2")} onClick={copyOracleAddress}>copy</Button>
+                <Button className={cn(oracleAddress == 0 ? "hidden" : "h-6 w-12 m-2")} onClick={() =>copyAddress(String(oracleAddress))}>copy</Button>
               </code>
             </CardHeader>
             <CardContent>
@@ -222,13 +226,13 @@ const AdminPanel: NextPage = () => {
           <Card className='m-4 flex flex-col'>
             <CardHeader>
               <CardTitle>Current lottery address & id: </CardTitle>
-              <code> 
+              <code className="hover:underline"> 
                 {
                   activeLottery == 0 ? 
                   "No lottery deployed" : 
                   String(activeLottery).slice(0, 6) + "..." + String(activeLottery).slice(38)
                 } 
-                <Button className={cn(activeLottery == 0 ? "hidden" : "h-6 w-12 m-2")} onClick={copyLotteryAddress}>copy</Button> 
+                <Button className={cn(activeLottery == 0 ? "hidden" : "h-6 w-12 m-2")} onClick={() => copyAddress(String(activeLottery))}>copy</Button> 
               </code>
               <code> {activeLottery == 0 ? "" : "&" } </code>
               <code> {activeLottery == 0 ? "" : Number(lotteryCount) - 1} </code>

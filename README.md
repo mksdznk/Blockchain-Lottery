@@ -27,6 +27,7 @@ copy ```.env.sample``` and create ```.env``` and populate with respective keys
 ```yarn install # or npm install``` <br>
 ```yarn dev # starts on localhost:3000```
 
+Current deployment: [https://blockchain-lottery-alpha.vercel.app/](https://blockchain-lottery-alpha.vercel.app/)
 
 Contract addresses of deployed instance: (sepolia)
  - LotteryFactory: [0x9843931D93d5131EDE9DceAC0407500070A0e097](https://sepolia.etherscan.io/address/0x9843931D93d5131EDE9DceAC0407500070A0e097)

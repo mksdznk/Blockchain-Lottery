@@ -337,9 +337,9 @@ const Lotteries: NextPage = () => {
               </div>
               <CardTitle>
                 Lottery address:  
-                <a href={lotteryEtherscanLink(String(activeLottery))}>
-                  { ' ' + String(activeLottery).slice(0, 6) + "..." + String(activeLottery).slice(38) } 
-                </a>  
+                <a className="hover:underline" href={lotteryEtherscanLink(String(activeLottery))}>
+                  { ' ' + String(activeLottery).slice(0, 6) + "..." + String(activeLottery).slice(38) }
+                </a>
                 <Button 
                   className="h-6 w-12 m-2" 
                   onClick={() => copyLotteryAddress(String(activeLottery))}>
@@ -451,9 +451,9 @@ const Lotteries: NextPage = () => {
               </div>
               <CardTitle>
                 Lottery address:  
-                <a href={lotteryEtherscanLink(lottery.lotteryAddress)}>
-                  { ' ' + lottery.lotteryAddress.slice(0, 6) + "..." + lottery.lotteryAddress.slice(38) } 
-                </a>  
+                <a className="hover:underline" href={lotteryEtherscanLink(lottery.lotteryAddress)}>
+                  { ' ' + lottery.lotteryAddress.slice(0, 6) + "..." + lottery.lotteryAddress.slice(38) }
+                </a>
                 <Button 
                   className="h-6 w-12 m-2" 
                   onClick={() =>copyLotteryAddress(lottery.lotteryAddress)}>
@@ -474,7 +474,7 @@ const Lotteries: NextPage = () => {
                   </PopoverDescription>
                   <PopoverDescription>
                     LotteryWinner: 
-                    <a href={lotteryEtherscanLink(lottery.winner)}>
+                    <a className="hover:underline" href={lotteryEtherscanLink(lottery.winner)}>
                       { ' ' + lottery.winner.slice(0, 6) + "..." + lottery.winner.slice(38) }
                     </a>
                     <Button 
@@ -501,9 +501,9 @@ const Lotteries: NextPage = () => {
               />
               <CardTitle> 
                 NFT address: 
-                <a href={lotteryEtherscanLink(lotteryNftContractConfig.address)}>
+                <a className="hover:underline" href={lotteryEtherscanLink(lotteryNftContractConfig.address)}>
                   {' ' + lotteryNftContractConfig.address.slice(0, 6) + "..." + lotteryNftContractConfig.address.slice(38)}
-                </a>                     
+                </a>                   
                 <Button 
                   className="h-6 w-10 m-2" 
                   onClick={() =>copyLotteryAddress(lotteryNftContractConfig.address)}>

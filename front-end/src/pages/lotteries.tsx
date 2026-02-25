@@ -378,7 +378,7 @@ const Lotteries: NextPage = () => {
                   <code> {Number(userTickets?.value) > 0 ? "You have " + Number(userTickets?.value) + " tickets" : ""} </code>
                   <Button 
                     className='w-full'
-                    disabled={Number(ticketsLeft) == 0 || Number(ticketsLeft) > ticketsToBuy || ticketsToBuy == 0 || isBuying || isBuyingLoading}
+                    disabled={Number(ticketsLeft) == 0 || Number(ticketsLeft) < ticketsToBuy || ticketsToBuy == 0 || isBuying || isBuyingLoading}
                     onClick={buyTickets}>
                       {isBuying || isBuyingLoading? 'Buying...' :  'Buy ticket / s'}
                   </Button>

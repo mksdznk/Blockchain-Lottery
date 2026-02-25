@@ -23,9 +23,9 @@ copy ```.env.sample``` and create ```.env``` and populate with respective keys
  - Additonally fix contract configs in ```front-end/src/contracts/``` and change addresses to newly deployed ones
 
 6. ### FE setup
-```cd front-end```
-```yarn install   # or npm install```
-```yarn dev       # starts on localhost:3000```
+```cd front-end``` <br>
+```yarn install # or npm install``` <br>
+```yarn dev # starts on localhost:3000```
 
 
 Contract addresses of deployed instance: (sepolia)

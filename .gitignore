@@ -14,8 +14,8 @@ docs/
 # Dotenv file
 .env
 
-# Library files
-lib/
+# Library files (Foundry deps - top-level only)
+/lib/
 
 # Etc.
 .DS_Store

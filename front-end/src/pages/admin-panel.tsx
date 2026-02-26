@@ -96,7 +96,7 @@ const AdminPanel: NextPage = () => {
       createLotteryWriteContract({
         ...lotteryFactoryContractConfig,
         functionName: 'createLottery',
-        args: [feePercentage, ticketPrice, ticketsCap, ticketsMaxOwners],
+        args: [feePercentage, ticketPrice*10**18, ticketsCap, ticketsMaxOwners],
       })
     }
 
@@ -177,7 +177,7 @@ const AdminPanel: NextPage = () => {
       <main className="flex flex-col">
       <div className='flex justify-start m-3'>
         <h1 className='text-5xl p-3'>
-          Admin Panel {/* add etherscan link of contract */}
+          Admin Panel 
         </h1>
         <div className='pt-5'>
           <Button className='p-4' onClick={() => router.push('/lotteries')}>Go to lotteries</Button>
@@ -189,11 +189,11 @@ const AdminPanel: NextPage = () => {
           <Card className='m-4 flex flex-col'>
             <CardHeader>
               <CardTitle>Total fees accumulated: </CardTitle>
-              <code>{Number(collectedFees?.value)} Wei | {Number(collectedFees?.value) / 1e18} Eth</code>
+              <code>{Number(collectedFees?.value) / 1e18} Eth</code>
             </CardHeader>
             <CardContent>
               <Button className='w-full' disabled={Number(collectedFees?.value) == 0}>Withdraw</Button> 
-              <Input type='number' step={1} placeholder='Amount in Wei'></Input>
+              <Input type='number' placeholder='Amount in Eth'></Input>
             </CardContent>
           </Card>
 
@@ -278,7 +278,7 @@ const AdminPanel: NextPage = () => {
                         step={1}
                         min={1} 
                         onChange={(e) => setTicketPrice(Number(e.target.value))} 
-                        placeholder='Ticket price in Wei'/>
+                        placeholder='Ticket price in Eth'/>
                       <Input 
                         className='m-1' 
                         type='number' 

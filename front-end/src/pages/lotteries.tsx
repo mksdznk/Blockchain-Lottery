@@ -353,10 +353,10 @@ const Lotteries: NextPage = () => {
                 <PopoverContent>
                   <PopoverHeader>
                     <PopoverDescription>
-                      Ticket price: {Number(ticketPriceInWei)} Wei | {Number(ticketPriceInWei) / 10 ** 18} ETH
+                      Ticket price: {Number(ticketPriceInWei) / 10 ** 18} ETH
                     </PopoverDescription>
                     <PopoverDescription>
-                      Prize pool size: {Number(prizePoolSize?.value)} Wei | {Number(prizePoolSize?.formatted)} ETH
+                      Prize pool size: {Number(prizePoolSize?.formatted)} ETH
                     </PopoverDescription>
                     <PopoverDescription>
                       Tickets left: {Number(ticketsLeft)} / {Number(maxTickets)}
@@ -391,7 +391,7 @@ const Lotteries: NextPage = () => {
                       placeholder="Number of tickets" 
                       onChange={(e) => setTicketsToBuy(Number(e.target.value))} />
                     <code className='p-2'>
-                      = {Number(ticketPriceInWei) * ticketsToBuy} Wei | {Number(ticketPriceInWei) * ticketsToBuy / 10 ** 18} ETH
+                      = {Number(ticketPriceInWei) * ticketsToBuy / 10 ** 18} ETH
                     </code>
                   </div>
                 
@@ -432,7 +432,7 @@ const Lotteries: NextPage = () => {
         <Separator></Separator>
 
         <h1 className='text-3xl p-3'>
-          Past Lotteries {/* add etherscan link of contract */}
+          Past Lotteries 
         </h1>        
         <div className='grid grid-flow-row-dense grid-cols-3 grid-rows-3'>
 
@@ -484,7 +484,7 @@ const Lotteries: NextPage = () => {
                     </Button> 
                   </PopoverDescription>
                   <PopoverDescription>
-                    Winning amount: {Number(lottery.winningAmount)} Wei |  {Number(lottery.winningAmount) / 10 ** 18} ETH
+                    Winning amount: {Number(lottery.winningAmount) / 10 ** 18} ETH
                   </PopoverDescription>       
                 </PopoverHeader>
               </PopoverContent>
